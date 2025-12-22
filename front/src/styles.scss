@@ -1,1 +1,47 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+@use './styles/theme-colors' as mdd;
+
+$primary: #7763c5;
+$article-surface: #f5f5f5;
+
+:root {
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mdd.$primary-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  @include mat.theme-overrides(
+    (
+      primary: #{$primary},
+      on-primary: #ffffff,
+    )
+  );
+
+  @include mat.button-overrides(
+    (
+      filled-container-color: #{$primary},
+      filled-label-text-color: #ffffff,
+    )
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+}
+
+.mdd-article {
+  background: $article-surface;
+}
