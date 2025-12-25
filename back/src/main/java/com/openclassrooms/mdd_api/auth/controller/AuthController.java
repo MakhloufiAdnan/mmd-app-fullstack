@@ -6,6 +6,12 @@ import com.openclassrooms.mdd_api.auth.dto.RegisterRequest;
 import com.openclassrooms.mdd_api.auth.dto.TokenResponse;
 import com.openclassrooms.mdd_api.auth.service.AuthService;
 import com.openclassrooms.mdd_api.common.config.OcAppProperties;
+import com.openclassrooms.mdd_api.common.web.ApiUnauthorizedException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -15,26 +21,55 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Auth endpoints (contrat MVP).
+ *
+ * Important (Option 2 CSRF) :
+ * - Tous les POST/PUT/DELETE attendent un header X-XSRF-TOKEN (valeur du cookie XSRF-TOKEN).
+ * - GET /api/auth/csrf sert de point d'entrée simple pour init ce cookie côté SPA.
+ */
+@Tag(name = "Auth", description = "Authentication endpoints (JWT access + refresh cookie HttpOnly + CSRF)")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String REFRESH_COOKIE_NAME = "refreshToken";
+
     private final AuthService authService;
     private final OcAppProperties props;
 
+    @Operation(summary = "Init CSRF cookie (SPA)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "CSRF cookie issued (XSRF-TOKEN)")
+    })
     @GetMapping("/csrf")
     public ResponseEntity<Void> csrf(CsrfToken token) {
+        // Force le chargement du token "deferred" et l'émission du cookie XSRF-TOKEN
         token.getToken();
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Register (email, username, password)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "User created"),
+            @ApiResponse(responseCode = "400", description = "Validation error / password policy"),
+            @ApiResponse(responseCode = "409", description = "Email/username already used"),
+            @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
+    })
     @PostMapping("/register")
     public ResponseEntity<IdResponse> register(@Valid @RequestBody RegisterRequest request) {
         Long id = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new IdResponse(id));
     }
 
+    @Operation(summary = "Login with email or username")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Access token issued + refresh cookie set"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+            @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
+    })
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         var bundle = authService.login(request);
@@ -44,12 +79,18 @@ public class AuthController {
                 .body(bundle.tokenResponse());
     }
 
+    @Operation(summary = "Refresh access token (refresh cookie + CSRF)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "New access token issued + refresh cookie rotated"),
+            @ApiResponse(responseCode = "401", description = "Refresh token invalid/expired/missing"),
+            @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
+    })
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(
-            @CookieValue(name = "refreshToken", required = false) String refreshToken
+            @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String refreshToken
     ) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new ApiUnauthorizedException("Missing refresh token");
         }
 
         var bundle = authService.refresh(refreshToken);
@@ -59,10 +100,18 @@ public class AuthController {
                 .body(bundle.tokenResponse());
     }
 
+    @Operation(summary = "Logout (invalidate refresh token)")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Logged out + refresh cookie deleted"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
+    })
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-            @CookieValue(name = "refreshToken", required = false) String refreshToken
+            @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String refreshToken
     ) {
+        // Idempotent : si cookie absent, on renvoie quand même 204 et on "supprime" le cookie.
         authService.logout(refreshToken);
 
         return ResponseEntity.noContent()
@@ -70,8 +119,13 @@ public class AuthController {
                 .build();
     }
 
+    /**
+     * Cookie refresh token (HttpOnly).
+     * En prod : Secure=true (HTTPS).
+     * Path=/api/auth conforme au contrat.
+     */
     private ResponseCookie buildRefreshCookie(String value) {
-        return ResponseCookie.from("refreshToken", value)
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, value)
                 .httpOnly(true)
                 .secure(props.isCookieSecure())
                 .sameSite("Lax")
@@ -81,7 +135,7 @@ public class AuthController {
     }
 
     private ResponseCookie deleteRefreshCookie() {
-        return ResponseCookie.from("refreshToken", "")
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(props.isCookieSecure())
                 .sameSite("Lax")
