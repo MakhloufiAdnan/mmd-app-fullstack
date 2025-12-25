@@ -10,6 +10,14 @@ import org.springframework.util.StringUtils;
 
 import java.util.function.Supplier;
 
+/**
+ * CSRF handler adapté SPA.
+ * - SPA (Angular) : lit cookie XSRF-TOKEN et renvoie header X-XSRF-TOKEN (token "brut").
+ * - Pour conserver la protection BREACH côté rendu/form, on garde le XOR handler.
+ * Comportement :
+ * - header présent => compare token brut (header)
+ * - sinon => logique XOR (form param / autres cas)
+ */
 public final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeHandler {
 
     private final CsrfTokenRequestHandler delegate = new XorCsrfTokenRequestAttributeHandler();

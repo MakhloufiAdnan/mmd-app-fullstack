@@ -6,10 +6,12 @@ import com.openclassrooms.mdd_api.auth.dto.TokenResponse;
 import com.openclassrooms.mdd_api.auth.validation.PasswordPolicy;
 import com.openclassrooms.mdd_api.common.web.ApiBadRequestException;
 import com.openclassrooms.mdd_api.common.web.ApiConflictException;
+import com.openclassrooms.mdd_api.common.web.ApiUnauthorizedException;
 import com.openclassrooms.mdd_api.common.web.FieldErrorItem;
 import com.openclassrooms.mdd_api.user.entity.User;
 import com.openclassrooms.mdd_api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,21 +33,26 @@ public class AuthService {
     @Transactional
     public Long register(RegisterRequest req) {
         if (!PasswordPolicy.isValid(req.password())) {
-            // Conforme contrat : 400 VALIDATION_ERROR + fieldErrors possible
             throw new ApiBadRequestException(
                     "Password policy not respected",
-                    List.of(new FieldErrorItem("password",
-                            "Must be >=8 and contain lower, upper, digit and special character"))
+                    List.of(new FieldErrorItem(
+                            "password",
+                            "Must be >=8 and contain lower, upper, digit and special character"
+                    ))
             );
         }
 
         if (userRepository.existsByEmail(req.email()) || userRepository.existsByUsername(req.username())) {
-            // Conforme contrat : 409 CONFLICT
             throw new ApiConflictException("Email or username already used");
         }
 
-        User u = new User(req.email(), req.username(), passwordEncoder.encode(req.password()));
-        return userRepository.save(u).getId();
+        try {
+            User u = new User(req.email(), req.username(), passwordEncoder.encode(req.password()));
+            return userRepository.save(u).getId();
+        } catch (DataIntegrityViolationException e) {
+            // Anti-race (double submit / concurrence) : on mappe en 409 sans fuite SQL
+            throw new ApiConflictException("Email or username already used");
+        }
     }
 
     @Transactional
@@ -68,9 +75,8 @@ public class AuthService {
     public TokenBundle refresh(String refreshTokenRaw) {
         var rotated = refreshTokenService.rotate(refreshTokenRaw);
 
-        // Reload "safe" : User pleinement initialisé
         User user = userRepository.findById(rotated.userId())
-                .orElseThrow(() -> new com.openclassrooms.mdd_api.common.web.ApiUnauthorizedException("Invalid refresh token"));
+                .orElseThrow(() -> new ApiUnauthorizedException("Invalid refresh token"));
 
         TokenResponse access = jwtService.issueAccessToken(user);
         return new TokenBundle(access, rotated.issued().rawToken());

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
@@ -27,6 +28,8 @@ public class RefreshTokenService {
      * On renvoie un identifiant stable (userId).
      */
     public record Rotated(long userId, Issued issued) {}
+
+    private static final int RAW_TOKEN_BYTES = 32;
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final OcAppProperties props;
@@ -53,12 +56,12 @@ public class RefreshTokenService {
                 .filter(rt -> rt.isActive(now))
                 .orElseThrow(() -> new ApiUnauthorizedException("Invalid refresh token"));
 
-        long userId = existing.getUser().getId(); // OK : l'id est accessible sans initialiser le proxy
+        long userId = existing.getUser().getId(); // OK dans transaction, id accessible
 
         // Single session : révoque tous les tokens actifs
         refreshTokenRepository.revokeAllActiveByUserId(userId, now);
 
-        // Émet un nouveau refresh token (on peut réutiliser le proxy user pour la FK, pas besoin d'init)
+        // Émet un nouveau refresh token
         Issued issued = persistNewToken(existing.getUser(), now);
 
         return new Rotated(userId, issued);
@@ -81,7 +84,7 @@ public class RefreshTokenService {
     }
 
     private String generateRawToken() {
-        byte[] bytes = new byte[32];
+        byte[] bytes = new byte[RAW_TOKEN_BYTES];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
@@ -91,8 +94,9 @@ public class RefreshTokenService {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(value.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot hash token", e);
+        } catch (NoSuchAlgorithmException e) {
+            // Technique / environnement : on ne doit pas masquer ça
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 }

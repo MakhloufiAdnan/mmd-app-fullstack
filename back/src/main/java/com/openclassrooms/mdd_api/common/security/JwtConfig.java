@@ -6,7 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -23,7 +26,7 @@ public class JwtConfig {
     public SecretKey jwtSecretKey() {
         byte[] keyBytes = toKeyBytes(props.getJwtSecret());
 
-        // HS256 => 32 bytes
+        // HS256 => 32 bytes minimum (256 bits)
         if (keyBytes.length < 32) {
             throw new IllegalStateException("TOKEN_SECRET too short for HS256 (need >= 32 bytes)");
         }
