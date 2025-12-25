@@ -6,7 +6,7 @@ import com.openclassrooms.mdd_api.auth.dto.RegisterRequest;
 import com.openclassrooms.mdd_api.auth.dto.TokenResponse;
 import com.openclassrooms.mdd_api.auth.service.AuthService;
 import com.openclassrooms.mdd_api.common.config.OcAppProperties;
-import com.openclassrooms.mdd_api.common.web.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

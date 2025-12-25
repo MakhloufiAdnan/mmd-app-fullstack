@@ -1,15 +1,14 @@
-package com.openclassrooms.mdd_api.common.web;
+package com.openclassrooms.mdd_api.common.web.exception;
+
+import com.openclassrooms.mdd_api.common.web.response.FieldErrorItem;
+import lombok.Getter;
 
 import java.util.List;
 
 /**
- * Exception métier -> HTTP 400.
- *
- * Usage "prod" :
- * - pour toutes les validations non couvertes par Bean Validation (@Valid),
- *   ex: politique de mot de passe, règles métier.
- * - permet de renvoyer des fieldErrors cohérents avec le contrat API.
+ * Exception métier pour gérer les erreurs de validation (HTTP 400).
  */
+@Getter
 public class ApiBadRequestException extends RuntimeException {
 
     private final List<FieldErrorItem> fieldErrors;
@@ -21,9 +20,5 @@ public class ApiBadRequestException extends RuntimeException {
     public ApiBadRequestException(String message, List<FieldErrorItem> fieldErrors) {
         super(message);
         this.fieldErrors = fieldErrors == null ? List.of() : List.copyOf(fieldErrors);
-    }
-
-    public List<FieldErrorItem> getFieldErrors() {
-        return fieldErrors;
     }
 }

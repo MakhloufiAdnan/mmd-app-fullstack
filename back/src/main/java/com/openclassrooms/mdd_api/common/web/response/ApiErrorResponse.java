@@ -1,4 +1,4 @@
-package com.openclassrooms.mdd_api.common.web;
+package com.openclassrooms.mdd_api.common.web.response;
 
 import java.util.List;
 

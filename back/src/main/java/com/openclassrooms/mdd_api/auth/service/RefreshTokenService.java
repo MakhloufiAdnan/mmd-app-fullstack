@@ -3,7 +3,7 @@ package com.openclassrooms.mdd_api.auth.service;
 import com.openclassrooms.mdd_api.auth.entity.RefreshToken;
 import com.openclassrooms.mdd_api.auth.repository.RefreshTokenRepository;
 import com.openclassrooms.mdd_api.common.config.OcAppProperties;
-import com.openclassrooms.mdd_api.common.web.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
 import com.openclassrooms.mdd_api.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,6 +43,13 @@ public class RefreshTokenService {
         return persistNewToken(user, now);
     }
 
+    /**
+     * Rotation du refresh token (recommandée par le contrat) :
+     * - consomme le token existant (révocation)
+     * - émet un nouveau token
+     * Robustesse : la lecture est verrouillée (PESSIMISTIC_WRITE) pour empêcher
+     * deux refresh concurrents de consommer le même token.
+     */
     @Transactional
     public Rotated rotate(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) {
@@ -52,16 +59,16 @@ public class RefreshTokenService {
         Instant now = Instant.now();
         String hash = sha256Hex(rawToken);
 
-        RefreshToken existing = refreshTokenRepository.findByTokenHash(hash)
+        RefreshToken existing = refreshTokenRepository.findByTokenHashForUpdate(hash)
                 .filter(rt -> rt.isActive(now))
                 .orElseThrow(() -> new ApiUnauthorizedException("Invalid refresh token"));
 
-        long userId = existing.getUser().getId(); // OK dans transaction, id accessible
+        long userId = existing.getUser().getId();
 
         // Single session : révoque tous les tokens actifs
         refreshTokenRepository.revokeAllActiveByUserId(userId, now);
 
-        // Émet un nouveau refresh token
+        // Émet un nouveau refresh token (user proxy OK pour FK)
         Issued issued = persistNewToken(existing.getUser(), now);
 
         return new Rotated(userId, issued);
@@ -95,7 +102,6 @@ public class RefreshTokenService {
             byte[] digest = md.digest(value.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException e) {
-            // Technique / environnement : on ne doit pas masquer ça
             throw new IllegalStateException("SHA-256 not available", e);
         }
     }

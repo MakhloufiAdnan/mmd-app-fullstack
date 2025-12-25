@@ -1,12 +1,5 @@
-package com.openclassrooms.mdd_api.common.web;
+package com.openclassrooms.mdd_api.common.web.response;
 
-/**
- * Codes d'erreur standardisés (contrat API).
- *
- * Bonnes pratiques prod :
- * - centraliser les "literals" (évite les typos et facilite l'évolution)
- * - garder des codes stables côté client (front/Postman/tests)
- */
 public final class ApiErrorCodes {
 
     private ApiErrorCodes() {}

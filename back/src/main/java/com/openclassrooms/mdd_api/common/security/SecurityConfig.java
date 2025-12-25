@@ -2,8 +2,8 @@ package com.openclassrooms.mdd_api.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mdd_api.common.config.OcAppProperties;
-import com.openclassrooms.mdd_api.common.web.ApiErrorCodes;
-import com.openclassrooms.mdd_api.common.web.ApiErrorResponse;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

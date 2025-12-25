@@ -1,6 +1,8 @@
-package com.openclassrooms.mdd_api.common.web;
+package com.openclassrooms.mdd_api.common.web.handler;
 
-import jakarta.servlet.http.HttpServletRequest;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorResponse;
+import com.openclassrooms.mdd_api.common.web.response.FieldErrorItem;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,12 @@ import java.util.List;
 @RestControllerAdvice
 public class RestExceptionHandler {
 
+    private ResponseEntity<ApiErrorResponse> createErrorResponse(String code, String message, List<FieldErrorItem> fieldErrors) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new ApiErrorResponse(code, message, fieldErrors)
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         List<FieldErrorItem> fieldErrors = ex.getBindingResult().getFieldErrors()
@@ -24,53 +32,38 @@ public class RestExceptionHandler {
                 .map(this::toFieldErrorItem)
                 .toList();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ApiErrorResponse(ApiErrorCodes.VALIDATION_ERROR, "Validation error", fieldErrors)
-        );
+        return createErrorResponse(ApiErrorCodes.VALIDATION_ERROR, "Validation error", fieldErrors);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleNotReadable(HttpMessageNotReadableException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ApiErrorResponse(ApiErrorCodes.VALIDATION_ERROR, "Malformed or missing JSON body", List.of())
-        );
+        return createErrorResponse(ApiErrorCodes.VALIDATION_ERROR, "Malformed or missing JSON body", List.of());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleBadRequest(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ApiErrorResponse(ApiErrorCodes.VALIDATION_ERROR, ex.getMessage(), List.of())
-        );
+        return createErrorResponse(ApiErrorCodes.VALIDATION_ERROR, ex.getMessage(), List.of());
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse> handleConflict(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                new ApiErrorResponse(ApiErrorCodes.CONFLICT, ex.getMessage(), List.of())
-        );
+        return createErrorResponse(ApiErrorCodes.CONFLICT, ex.getMessage(), List.of());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleDbConflict(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                new ApiErrorResponse(ApiErrorCodes.CONFLICT, "Conflict", List.of())
-        );
+        return createErrorResponse(ApiErrorCodes.CONFLICT, "Conflict", List.of());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiErrorResponse> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ApiErrorResponse(ApiErrorCodes.UNAUTHORIZED, "Invalid credentials", List.of())
-        );
+        return createErrorResponse(ApiErrorCodes.UNAUTHORIZED, "Invalid credentials", List.of());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest req) {
-        log.error("Unhandled exception on {} {}", req.getMethod(), req.getRequestURI(), ex);
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new ApiErrorResponse(ApiErrorCodes.INTERNAL, "Internal error", List.of())
-        );
+    public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex) {
+        log.error("Unhandled exception", ex);
+        return createErrorResponse(ApiErrorCodes.INTERNAL, "Internal error", List.of());
     }
 
     private FieldErrorItem toFieldErrorItem(FieldError fe) {
