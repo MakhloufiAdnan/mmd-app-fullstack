@@ -3,6 +3,7 @@ oc:
     jwtExpirationMs: ${JWT_EXPIRATION_MS}
     refreshTokenExpirationMs: ${REFRESH_TOKEN_EXPIRATION_MS}
     jwtSecret: ${TOKEN_SECRET}
+    cookieSecure: ${COOKIE_SECURE:false}
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
