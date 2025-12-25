@@ -25,6 +25,7 @@
         <testcontainers.version>1.20.0</testcontainers.version>
         <jacoco.version>0.8.11</jacoco.version>
         <lombok.version>1.18.32</lombok.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
 
     <dependencies>
@@ -73,7 +74,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Devtools (optionnel) -->
+        <!-- Devtools  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -81,7 +82,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Lombok (optionnel) -->
+        <!-- Lombok  -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -100,6 +101,13 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.5</version>
         </dependency>
 
         <!-- Testcontainers (e2e / intégration sur vraie DB MySQL) -->
@@ -130,7 +138,7 @@
 
     <build>
         <plugins>
-            <!-- Lombok annotation processing (si Lombok est utilisé) -->
+            <!-- Lombok annotation processing -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -158,7 +166,7 @@
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo (seuil minimal au début, tu augmentes quand la base TDD est en place) -->
+            <!-- JaCoCo  -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
