@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.FileSystemResource;
 
-
 @Configuration
 public class DotenvConfig {
 
@@ -13,7 +12,7 @@ public class DotenvConfig {
     public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
         configurer.setLocation(new FileSystemResource(".env"));
-        configurer.setIgnoreResourceNotFound(true); // évite de casser en CI si .env absent
+        configurer.setIgnoreResourceNotFound(true); // avoids breaking CI if .env is absent
         return configurer;
     }
 }

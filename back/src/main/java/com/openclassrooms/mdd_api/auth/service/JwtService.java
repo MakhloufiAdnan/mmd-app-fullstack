@@ -16,7 +16,7 @@ import java.time.Instant;
 public class JwtService {
 
     private static final String ISSUER = "mdd-api";
-    private static final String TOKEN_TYPE_BEARER = "Bearer"; // conforme contrat
+    private static final String TOKEN_TYPE_BEARER = "Bearer";
     private static final MacAlgorithm SIGNING_ALG = MacAlgorithm.HS256;
 
     private final JwtEncoder jwtEncoder;
