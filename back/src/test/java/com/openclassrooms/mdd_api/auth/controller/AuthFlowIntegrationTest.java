@@ -1,8 +1,9 @@
-package com.openclassrooms.mdd_api.auth;
+package com.openclassrooms.mdd_api.auth.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mdd_api.auth.repository.RefreshTokenRepository;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
 import com.openclassrooms.mdd_api.support.AbstractMySqlIntegrationTest;
 import com.openclassrooms.mdd_api.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
@@ -236,6 +237,66 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                         .cookie(csrf.cookie(), refreshCookie))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void login_malformed_json_returns_400_with_contract_payload() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        String malformedJson = """
+            {"identifier":"bob@example.com","password":
+            """;
+
+        // Act + Assert
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(malformedJson)
+                        .cookie(csrf.cookie())
+                        .header(CSRF_HEADER, csrf.token()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.message").value("Malformed request body"))
+                .andExpect(jsonPath("$.fieldErrors").isArray())
+                .andExpect(jsonPath("$.fieldErrors").isEmpty());
+    }
+
+    @Test
+    void refresh_without_cookie_returns_401_with_contract_payload() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+
+        // Act + Assert (pas de cookie refreshToken)
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cookie(csrf.cookie())
+                        .header(CSRF_HEADER, csrf.token()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.UNAUTHORIZED))
+                .andExpect(jsonPath("$.message").value("Missing refresh token"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+    }
+
+    @Test
+    void refresh_blank_cookie_returns_401_with_contract_payload() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+
+        Cookie blankRefresh = new Cookie(REFRESH_COOKIE, "   ");
+        blankRefresh.setPath("/api/auth");
+
+        // Act + Assert (cookie présent mais blank)
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cookie(csrf.cookie(), blankRefresh)
+                        .header(CSRF_HEADER, csrf.token()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.UNAUTHORIZED))
+                .andExpect(jsonPath("$.message").value("Missing refresh token"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+    }
+
 
     // Helpers (test only)
 
