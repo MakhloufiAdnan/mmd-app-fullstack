@@ -188,8 +188,10 @@
                             <excludes>
                                 <!-- DTOs & Entities : pas de logique métier -->
                                 <exclude>com/openclassrooms/mdd_api/auth/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/user/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/auth/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/user/entity/**</exclude>
+
                             </excludes>
                         </configuration>
                     </execution>
@@ -203,6 +205,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>com/openclassrooms/mdd_api/auth/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/user/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/auth/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/user/entity/**</exclude>
                             </excludes>
