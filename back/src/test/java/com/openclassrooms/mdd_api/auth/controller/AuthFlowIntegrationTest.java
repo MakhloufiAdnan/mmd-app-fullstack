@@ -159,7 +159,7 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         );
 
         assertThat(deleteSetCookie)
-                .as("Logout doit supprimer le refresh cookie :contentReference[oaicite:6]{index=6}")
+                .as("Logout doit supprimer le refresh cookie")
                 .contains(REFRESH_COOKIE + "=")
                 .contains("Max-Age=0")
                 .contains("Path=/api/auth");

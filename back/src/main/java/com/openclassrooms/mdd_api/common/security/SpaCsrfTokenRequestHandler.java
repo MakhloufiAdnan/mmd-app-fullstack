@@ -16,7 +16,8 @@ import java.util.function.Supplier;
  * - Pour conserver la protection BREACH côté rendu/form, on garde le XOR handler.
  * Comportement :
  * - header présent => compare token brut (header)
- * - sinon => logique XOR (form param / autres cas)
+ * - sinon, si param _csrf présent => logique XOR (form submit)
+ * - sinon => null (CSRF manquant => 403 sur méthodes unsafe)
  */
 public final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeHandler {
 
@@ -30,11 +31,19 @@ public final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeH
 
     @Override
     public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
-        // Si header présent (SPA), on compare avec le token brut (cookie XSRF-TOKEN)
-        if (StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()))) {
-            return super.resolveCsrfTokenValue(request, csrfToken);
+        // SPA: si header présent, on compare le token brut (cookie XSRF-TOKEN)
+        String headerValue = request.getHeader(csrfToken.getHeaderName());
+        if (StringUtils.hasText(headerValue)) {
+            return headerValue;
         }
-        // Sinon (form param), garder la logique XOR
-        return this.delegate.resolveCsrfTokenValue(request, csrfToken);
+
+        // Form submit: uniquement si param _csrf présent, on passe par XOR (token masqué)
+        String paramValue = request.getParameter(csrfToken.getParameterName());
+        if (StringUtils.hasText(paramValue)) {
+            return this.delegate.resolveCsrfTokenValue(request, csrfToken);
+        }
+
+        // Sinon: pas de header + pas de param => CSRF manquant
+        return null;
     }
 }
