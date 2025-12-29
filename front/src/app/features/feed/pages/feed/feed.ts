@@ -1,19 +1,15 @@
 import { Component } from '@angular/core';
 
 /**
- * Raison d'être :
- * - Permet de vérifier rapidement le parcours UI après login
- * - Sert de point d'atterrissage "connecté". Todo: d'implémenter
- *   la vraie feature feed et la sécurité.
+ * Page Feed 
+ * Objectif : avoir une route protégée pour valider guards + bootstrap + interceptor.
+ *
+ * Todo remplacer ce stub par le vrai feed (GET /api/feed?order=...).
  */
 @Component({
   selector: 'mdd-feed',
   standalone: true,
-  template: `
-    <section style="padding:24px 16px">
-      <h1>Feed</h1>
-      <p>Placeholder (Phase 1). La protection + session persistante arrive en Phase 2.</p>
-    </section>
-  `,
+  templateUrl: './feed.html',
+  styleUrl: './feed.scss',
 })
 export class Feed {}

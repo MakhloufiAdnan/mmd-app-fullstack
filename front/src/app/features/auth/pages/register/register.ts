@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { catchError, finalize, of, startWith, switchMap } from 'rxjs';
+import { finalize, startWith } from 'rxjs';
 
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
@@ -11,15 +11,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
-import { AuthApiService } from '../../services/auth-api.service';
 import { passwordPolicyValidator } from '../../../../shared/validators/password-policy.validator';
+import { AuthFacade } from '../../../../core/auth/auth.facade';
 import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-error.model';
 
 /**
- * Page "Inscription" 
- * - Validations UX + policy password
- * - Bouton activé dès que le form devient VALID (statusChanges -> toSignal)
- * - subscribe sécurisé via takeUntilDestroyed
+ * - Appel via facade (register)
+ * - Redirection vers /login ensuite 
  */
 @Component({
   selector: 'mdd-register',
@@ -30,7 +28,7 @@ import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-er
 })
 export class Register {
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(AuthApiService);
+  private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -38,7 +36,6 @@ export class Register {
   readonly globalError = signal<string | null>(null);
   readonly fieldErrors = signal<Record<string, string[]> | null>(null);
 
-  /** Formulaire register. */
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
@@ -47,7 +44,6 @@ export class Register {
 
   private readonly formStatus$ = this.form.statusChanges.pipe(startWith(this.form.status));
   readonly formStatus = toSignal(this.formStatus$, { initialValue: this.form.status });
-
   readonly canSubmit = computed(() => this.formStatus() === 'VALID' && !this.submitting());
 
   /**
@@ -68,9 +64,7 @@ export class Register {
     this.submitting.set(true);
     const payload = this.form.getRawValue();
 
-    const register$ = this.api.csrf().pipe(
-      catchError(() => of(void 0)),
-      switchMap(() => this.api.register(payload)),
+    const register$ = this.auth.register(payload).pipe(
       finalize(() => this.submitting.set(false)),
       takeUntilDestroyed(this.destroyRef)
     );

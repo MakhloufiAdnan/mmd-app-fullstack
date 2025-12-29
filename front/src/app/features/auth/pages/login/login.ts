@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { catchError, finalize, of, startWith, switchMap } from 'rxjs';
+import { finalize, startWith } from 'rxjs';
 
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
@@ -11,11 +11,17 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
-import { AuthApiService } from '../../services/auth-api.service';
+import { AuthFacade } from '../../../../core/auth/auth.facade';
 import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-error.model';
 
 /**
- * Page "Se connecter" 
+ * Rôle :
+ * - S'appuyer sur `AuthFacade.login()` pour stocker l'access token en mémoire.
+ * - Rediriger vers /feed après login.
+ *
+ * Note :
+ * - `canSubmit()` doit réagir au statut du formulaire.
+ *   `form.valid` n'est pas un signal => on utilise `statusChanges` + `toSignal`.
  */
 @Component({
   selector: 'mdd-login',
@@ -26,40 +32,36 @@ import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-er
 })
 export class Login {
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(AuthApiService);
+  private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** Empêche le double submit. */
+  /** Évite le double submit et gère l'état disabled. */
   readonly submitting = signal(false);
 
-  /** Message d'erreur global renvoyé par l'API. */
+  /** Message d'erreur global (ex: invalid credentials). */
   readonly globalError = signal<string | null>(null);
 
   /** Erreurs API par champ. */
   readonly fieldErrors = signal<Record<string, string[]> | null>(null);
 
-  /** Formulaire (identifier = email OU username). */
+  /** Formulaire : identifier = email OU username (contrat). */
   readonly form = this.fb.nonNullable.group({
     identifier: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
 
-  /**
-   * Permet de rendre le bouton réactif (computed ne réagit pas à `form.valid`).
-   */
+  /** Rend le statut du form réactif pour `computed()`. */
   private readonly formStatus$ = this.form.statusChanges.pipe(startWith(this.form.status));
-
-  /** Signal basé sur `formStatus$` pour recalculer `canSubmit` automatiquement. */
   readonly formStatus = toSignal(this.formStatus$, { initialValue: this.form.status });
 
-  /** Bouton actif si formulaire VALID et pas en cours de soumission. */
+  /** Bouton actif si form VALID et pas en cours de soumission. */
   readonly canSubmit = computed(() => this.formStatus() === 'VALID' && !this.submitting());
 
   /**
    * Soumission :
-   * - `csrf()` best-effort (selon config back)
-   * - `takeUntilDestroyed` ferme la subscription si le composant est détruit
+   * - Appelle `AuthFacade.login()` (csrf best-effort inclus côté facade/service selon ton implémentation).
+   * - Stocke le token en mémoire via le store, puis navigation /feed.
    */
   submit(): void {
     this.globalError.set(null);
@@ -73,23 +75,21 @@ export class Login {
     this.submitting.set(true);
     const payload = this.form.getRawValue();
 
-    const login$ = this.api.csrf().pipe(
-      catchError(() => of(void 0)),
-      switchMap(() => this.api.login(payload)),
+    const login$ = this.auth.login(payload).pipe(
       finalize(() => this.submitting.set(false)),
       takeUntilDestroyed(this.destroyRef)
     );
 
     login$.subscribe({
       next: () => void this.router.navigateByUrl('/feed'),
-      error: (err) => this.handleError(err),
+      error: (err: unknown) => this.handleError(err),
     });
   }
 
   /**
-   * Affichage d'erreurs :
-   * - API standard => global + fieldErrors
-   * - sinon => message générique (pas de fuite technique)
+   * Normalise l'erreur :
+   * - payload API standard => message global + erreurs par champ
+   * - sinon => message générique (évite fuite technique)
    */
   private handleError(err: unknown): void {
     if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
