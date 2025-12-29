@@ -1,0 +1,20 @@
+<section class="auth">
+  <header class="auth-header" aria-label="En-tête">
+    <img class="auth-header-logo" src="assets/logo-connexion.png" alt="Logo MDD" />
+  </header>
+
+  <main class="auth-main">
+    <button class="auth-back" mat-icon-button type="button" (click)="onBack()" aria-label="Retour">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+    </button>
+
+    <img class="auth-mobile-logo" src="assets/logo-mobile-connexion.png" alt="Logo MDD" />
+
+    <h1 class="auth-title">{{ title }}</h1>
+
+    <!-- Slot pour le formulaire -->
+    <div class="auth-body">
+      <ng-content></ng-content>
+    </div>
+  </main>
+</section>

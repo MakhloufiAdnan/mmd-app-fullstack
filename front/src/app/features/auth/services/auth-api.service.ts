@@ -7,7 +7,7 @@ import type {
   RegisterRequest,
   RegisterResponse,
   TokenResponse,
-} from './auth.models';
+} from '../interfaces/auth.models';
 
 /**
  * Thin API client for /api/auth endpoints.
@@ -16,7 +16,7 @@ import type {
  * - withCredentials=true garantit que le refresh cookie sera bien envoyé
  *   même si on n'utilise plus le proxy (CORS).
  * - CSRF: Angular attachera automatiquement X-XSRF-TOKEN sur POST/PUT/DELETE
- *   via withXsrfConfiguration(...) déjà présent dans app.config.ts.
+ *   via withXsrfConfiguration(...)
  */
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {

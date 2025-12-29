@@ -1,0 +1,26 @@
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.auth-submit {
+  align-self: center;
+  min-width: 140px;
+
+  /* Material MDC : shape via variable + fallback border-radius */
+  --mdc-filled-button-container-shape: 5px;
+  border-radius: 5px;
+}
+
+.auth-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  border-radius: 8px;
+}

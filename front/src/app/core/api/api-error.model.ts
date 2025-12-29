@@ -1,6 +1,15 @@
 /**
- * Source: api-contract.md > "Format d’erreur (unique)".
+ * Modèle d'erreur API côté front.
+ *
+ * Objectif :
+ * - Centraliser le parsing/typage des erreurs renvoyées par le back
+ * - Permettre une gestion cohérente des messages globaux et des erreurs de champs
+ *
+ * Note :
+ * - Les valeurs exactes de `ApiErrorCode` doivent rester alignées avec le contrat backend.
  */
+
+/** Codes d'erreur applicatifs attendus. */
 export type ApiErrorCode =
   | 'VALIDATION_ERROR'
   | 'UNAUTHORIZED'
@@ -9,42 +18,38 @@ export type ApiErrorCode =
   | 'CONFLICT'
   | 'INTERNAL';
 
+/** Erreur portée par un champ (utile pour les formulaires). */
 export interface ApiFieldError {
   field: string;
   message: string;
 }
 
+/** Payload d'erreur standard renvoyé par l'API. */
 export interface ApiErrorResponse {
   error: ApiErrorCode;
   message: string;
   fieldErrors?: ApiFieldError[];
 }
 
-export function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
-  if (value === null || typeof value !== 'object') return false;
-
-  const v = value as Partial<ApiErrorResponse>;
-  return (
-    typeof v.error === 'string' &&
-    typeof v.message === 'string' &&
-    (v.fieldErrors === undefined ||
-      (Array.isArray(v.fieldErrors) &&
-        v.fieldErrors.every(
-          (e) =>
-            e !== null &&
-            typeof e === 'object' &&
-            typeof (e as Partial<ApiFieldError>).field === 'string' &&
-            typeof (e as Partial<ApiFieldError>).message === 'string'
-        )))
-  );
+/**
+ * Type guard : vérifie que la valeur ressemble à une erreur API standard.
+ *
+ * @param v Valeur inconnue (souvent `HttpErrorResponse.error`)
+ * @returns true si le payload est compatible avec ApiErrorResponse
+ */
+export function isApiErrorResponse(v: unknown): v is ApiErrorResponse {
+  if (!v || typeof v !== 'object') return false;
+  const o = v as Record<string, unknown>;
+  return typeof o['error'] === 'string' && typeof o['message'] === 'string';
 }
 
 /**
- * Utility to convert fieldErrors array to a map: field -> message[]
+ * Transforme `fieldErrors` en map `{ [field]: messages[] }`.
+ * Utile pour afficher facilement les erreurs sous les inputs correspondants.
+ *
+ * @param fieldErrors Liste optionnelle d'erreurs de champs
  */
-export function toFieldErrorMap(
-  fieldErrors: ApiFieldError[] | undefined
-): Record<string, string[]> {
+export function toFieldErrorMap(fieldErrors?: ApiFieldError[]): Record<string, string[]> {
   const map: Record<string, string[]> = {};
   for (const fe of fieldErrors ?? []) {
     (map[fe.field] ??= []).push(fe.message);
