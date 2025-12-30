@@ -1,0 +1,36 @@
+.welcome {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 24px;
+  padding: 16px;
+}
+
+.welcome-logo img {
+  width: min(420px, 80vw);
+  height: auto;
+}
+
+.welcome-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: min(360px, 100%);
+}
+
+.welcome-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #000;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 599px) {
+  .welcome-actions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,75 @@
+.auth {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  height: 72px;
+  padding: 0 24px;
+  border-bottom: 2px solid #000;
+}
+
+.auth-header-logo {
+  height: 40px;
+  width: auto;
+}
+
+/* Zone principale centrée */
+.auth-main {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+}
+
+.auth-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+}
+
+/* Gros logo : visible sur mobile, caché sur desktop */
+.auth-mobile-logo {
+  margin-top: 32px;
+  height: 88px;
+  width: auto;
+}
+
+.auth-title {
+  margin: 16px 0 0;
+  text-align: center;
+}
+
+/* Conteneur du formulaire (fourni par ng-content) */
+.auth-body {
+  width: min(360px, 100%);
+  margin-top: 16px;
+}
+
+/* Desktop  */
+@media (min-width: 600px) {
+  .auth-mobile-logo {
+    display: none;
+  }
+
+  .auth-back {
+    top: 24px;
+    left: 24px;
+  }
+
+  .auth-title {
+    margin-top: 48px; 
+  }
+}
+
+/* Mobile : header masqué */
+@media (max-width: 599px) {
+  .auth-header {
+    display: none;
+  }
+}

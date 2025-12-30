@@ -1,0 +1,49 @@
+<mdd-auth-layout title="Se connecter">
+  <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
+    @if (globalError()) {
+    <p class="auth-error">{{ globalError() }}</p>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>E-mail ou nom d'utilisateur</mat-label>
+      <input
+        matInput
+        type="text"
+        name="username"
+        autocomplete="username"
+        formControlName="identifier"
+      />
+      @if (form.controls.identifier.touched && form.controls.identifier.hasError('required')) {
+      <mat-error>Champ obligatoire</mat-error>
+      } @if (fieldErrors()?.['identifier']?.length) {
+      <mat-error>{{ fieldErrors()?.['identifier']?.[0] }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Mot de passe</mat-label>
+      <input
+        matInput
+        type="password"
+        name="password"
+        autocomplete="current-password"
+        formControlName="password"
+      />
+      @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+      <mat-error>Champ obligatoire</mat-error>
+      } @if (fieldErrors()?.['password']?.length) {
+      <mat-error>{{ fieldErrors()?.['password']?.[0] }}</mat-error>
+      }
+    </mat-form-field>
+
+    <button
+      class="auth-submit"
+      mat-flat-button
+      color="primary"
+      type="submit"
+      [disabled]="!canSubmit()"
+    >
+      Se connecter
+    </button>
+  </form>
+</mdd-auth-layout>
