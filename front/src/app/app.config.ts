@@ -9,8 +9,8 @@ import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@ang
 import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
-import { AuthFacade } from './core/auth/auth.facade';
-import { authInterceptor } from './core/auth/auth.interceptor';
+import { AuthFacade } from './features/auth/state/auth.facade';
+import { authInterceptor } from './features/auth/infra/auth.interceptor';
 
 /**
  * Initialise l'app : bootstrap SPA auth (csrf -> refresh).

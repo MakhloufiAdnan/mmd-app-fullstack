@@ -4,7 +4,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { provideRouter } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor';
-import { AuthStore } from './auth.store';
+import { AuthStore } from '../state/auth.store';
 
 describe('Auth Interceptor', () => {
   let http: HttpClient;

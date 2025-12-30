@@ -7,9 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 
 /**
  * Layout des pages d'authentification (Login/Register).
- *
- * Note :
- * Todo: La logique d'auth (token, refresh, etc.)
  */
 @Component({
   selector: 'mdd-auth-layout',

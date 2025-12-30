@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 
-import { AuthFacade } from '../../auth/auth.facade';
+import { AuthFacade } from '@features/auth/state/auth.facade';
 
 /**
  * Layout protégé.

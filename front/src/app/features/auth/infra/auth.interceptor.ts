@@ -3,8 +3,8 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
-import { AuthStore } from './auth.store';
-import { AuthFacade } from './auth.facade';
+import { AuthStore } from '../state/auth.store';
+import { AuthFacade } from '../state/auth.facade';
 import { AUTH_REFRESH_ATTEMPTED } from './auth.http-context';
 
 /**

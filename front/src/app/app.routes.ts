@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authChildGuard, publicOnlyGuard } from './core/auth/auth.guards';
+import { authChildGuard, publicOnlyGuard } from './features/auth/infra/auth.guards';
 
 /**
  * Routing global.
@@ -29,7 +29,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivateChild: [authChildGuard],
-    loadComponent: () => import('./core/layout/auth-shell/auth-shell').then((m) => m.AuthShell),
+    loadComponent: () => import('./shell/auth-shell/auth-shell').then((m) => m.AuthShell),
     children: [
       {
         path: 'feed',

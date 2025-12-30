@@ -12,8 +12,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { passwordPolicyValidator } from '../../../../shared/validators/password-policy.validator';
-import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-error.model';
+import { passwordPolicyValidator } from '@shared/validators/password-policy.validator';
+import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
 import { UserMeApiService } from '../../services/user-me-api.service';
 import type {
   UpdateMeRequest,

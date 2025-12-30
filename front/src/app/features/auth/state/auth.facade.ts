@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, finalize, firstValueFrom, map, of, shareReplay, switchMap, tap } from 'rxjs';
 
-import type { LoginRequest, RegisterRequest, RegisterResponse, TokenResponse } from '../../features/auth/interfaces/auth.models';
-import { AuthApiService } from '../../features/auth/services/auth-api.service';
+import type { LoginRequest, RegisterRequest, RegisterResponse, TokenResponse } from '../interfaces/auth.models';
+import { AuthApiService } from '../services/auth-api.service';
 import { AuthStore } from './auth.store';
 
 /**

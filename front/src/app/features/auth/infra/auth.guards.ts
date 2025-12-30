@@ -3,7 +3,7 @@ import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { filter, map, take } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import { AuthStore } from './auth.store';
+import { AuthStore } from '../state/auth.store';
 
 /**
  * Attend la fin de l'initialisation auth (csrf -> refresh) pour éviter un redirect trop tôt au chargement.

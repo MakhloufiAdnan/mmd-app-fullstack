@@ -11,8 +11,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
-import { AuthFacade } from '../../../../core/auth/auth.facade';
-import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-error.model';
+import { AuthFacade } from '../../state/auth.facade';
+import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
 
 /**
  * Rôle :

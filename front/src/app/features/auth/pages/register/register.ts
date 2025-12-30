@@ -11,9 +11,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
-import { passwordPolicyValidator } from '../../../../shared/validators/password-policy.validator';
-import { AuthFacade } from '../../../../core/auth/auth.facade';
-import { isApiErrorResponse, toFieldErrorMap } from '../../../../core/api/api-error.model';
+import { passwordPolicyValidator } from '@shared/validators/password-policy.validator';
+import { AuthFacade } from '../../state/auth.facade';
+import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
 
 /**
  * - Appel via facade (register)

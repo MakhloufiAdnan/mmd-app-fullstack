@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { provideRouter, Router, UrlTree } from '@angular/router';
 
-import { AuthStore } from './auth.store';
+import { AuthStore } from '../state/auth.store';
 import { authGuard, publicOnlyGuard } from './auth.guards';
 
 @Component({ standalone: true, template: '' })
