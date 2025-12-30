@@ -1,0 +1,147 @@
+:host {
+  display: block;
+  height: 100vh;
+}
+
+/* Le container Material doit remplir le viewport */
+.shell {
+  height: 100%;
+}
+
+.content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  height: 72px;
+  padding: 0 16px;
+  border-bottom: 2px solid #000;
+  background: #fff;
+}
+
+.brand img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* Main scrollable */
+.page {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.desktop-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #000;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 6px 8px;
+}
+
+.desktop-link.active {
+  color: #7763c5;
+}
+
+.desktop-logout {
+  color: #d32f2f;
+}
+
+.profile-btn img {
+  height: 34px;
+  width: 34px;
+  border-radius: 999px;
+  display: block;
+}
+
+/* Burger mobile */
+.burger-btn {
+  display: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px;
+
+  img {
+    height: 26px;
+    width: auto;
+    display: block;
+  }
+}
+
+.drawer {
+  width: 280px;
+  border-left: 2px solid #000;
+  background: #fff;
+  border-radius: 0 !important;
+}
+
+.drawer-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+}
+
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding-top: 8px;
+}
+
+.drawer-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #000;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.drawer-logout {
+  color: #d32f2f;
+}
+
+.drawer-profile {
+  margin-top: auto;
+  align-self: flex-end;
+  display: inline-flex;
+
+  img {
+    height: 36px;
+    width: 36px;
+    border-radius: 999px;
+    display: block;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .burger-btn {
+    display: inline-flex;
+    align-items: center;
+  }
+}

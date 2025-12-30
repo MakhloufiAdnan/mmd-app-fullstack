@@ -1,0 +1,78 @@
+<mat-sidenav-container class="shell" [hasBackdrop]="true">
+  <!-- Drawer "over" : doit recouvrir header + main -->
+  <mat-sidenav #drawer class="drawer" mode="over" position="end">
+    <div class="drawer-content">
+      <nav class="drawer-nav" aria-label="Menu mobile">
+        <button type="button" class="drawer-link drawer-logout" (click)="logout(drawer)">
+          Se déconnecter
+        </button>
+
+        <a class="drawer-link" routerLink="/feed" (click)="closeDrawer(drawer)">Articles</a>
+        <a class="drawer-link" routerLink="/topics" (click)="closeDrawer(drawer)">Thèmes</a>
+      </nav>
+
+      <a
+        class="drawer-profile"
+        routerLink="/profile"
+        (click)="closeDrawer(drawer)"
+        aria-label="Profil"
+      >
+        <img src="assets/logo-profil.png" alt="Profil" />
+      </a>
+    </div>
+  </mat-sidenav>
+
+  <!-- Contenu recouvert par le drawer + grisé par le backdrop -->
+  <mat-sidenav-content class="content">
+    <mat-toolbar class="topbar">
+      <a class="brand" routerLink="/feed" aria-label="Aller aux articles">
+        <img src="assets/logo-header.png" alt="MDD" />
+      </a>
+
+      <span class="spacer"></span>
+
+      <!-- Desktop nav -->
+      <nav class="desktop-nav" aria-label="Navigation principale">
+        <button type="button" class="desktop-link desktop-logout" (click)="logout(drawer)">
+          Se déconnecter
+        </button>
+
+        <a
+          class="desktop-link"
+          routerLink="/feed"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Articles
+        </a>
+
+        <a
+          class="desktop-link"
+          routerLink="/topics"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Thèmes
+        </a>
+
+        <a class="profile-btn" routerLink="/profile" aria-label="Profil">
+          <img src="assets/logo-profil.png" alt="Profil" />
+        </a>
+      </nav>
+
+      <!-- Burger mobile (recouvert par le drawer quand ouvert) -->
+      <button
+        type="button"
+        class="burger-btn"
+        (click)="drawer.toggle()"
+        aria-label="Ouvrir le menu"
+      >
+        <img src="assets/logo-burger.png" alt="" />
+      </button>
+    </mat-toolbar>
+
+    <main class="page">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

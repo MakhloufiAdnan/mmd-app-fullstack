@@ -1,0 +1,28 @@
+.profile {
+  max-width: 920px;
+  margin: 16px auto;
+  padding: 0 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.error {
+  margin: 8px 0;
+}
+
+.spinner {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}

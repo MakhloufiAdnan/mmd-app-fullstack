@@ -1,13 +1,12 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { filter, map, take } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { AuthStore } from './auth.store';
 
 /**
- * Attend la fin du bootstrap SPA (csrf -> refresh) pour éviter
- * des redirections "faux négatif" au chargement.
+ * Attend la fin de l'initialisation auth (csrf -> refresh) pour éviter un redirect trop tôt au chargement.
  */
 function waitForInit$(store: AuthStore) {
   return toObservable(store.initialized).pipe(
@@ -17,23 +16,29 @@ function waitForInit$(store: AuthStore) {
 }
 
 /**
- * Guard des routes protégées.
- * - Si connecté => OK
- * - Sinon => redirect /login
+ * Vérifie l'auth :
+ * - si authentifié => true
+ * - sinon => redirection /login
  */
-export const authGuard: CanActivateFn = () => {
+function checkAuth$() {
   const store = inject(AuthStore);
   const router = inject(Router);
 
   return waitForInit$(store).pipe(
     map(() => (store.isAuthenticated() ? true : router.parseUrl('/login')))
   );
-};
+}
+
+/** Guard route protégée. */
+export const authGuard: CanActivateFn = () => checkAuth$();
+
+/** Guard layout wrapper (enfants). */
+export const authChildGuard: CanActivateChildFn = () => checkAuth$();
 
 /**
- * Guard des routes publiques (welcome/login/register).
- * - Si connecté => redirect /feed
- * - Sinon => OK
+ * Guard routes publiques :
+ * - si connecté => redirect /feed
+ * - sinon => OK
  */
 export const publicOnlyGuard: CanActivateFn = () => {
   const store = inject(AuthStore);
