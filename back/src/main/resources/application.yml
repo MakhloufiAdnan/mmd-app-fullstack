@@ -15,8 +15,12 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false
+    defer-datasource-initialization: true
   application:
     name: back
+  sql:
+    init:
+      mode: never
 logging:
   level:
     org:
