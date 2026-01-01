@@ -3,94 +3,102 @@ package com.openclassrooms.mdd_api.user.service;
 import com.openclassrooms.mdd_api.common.web.exception.ApiBadRequestException;
 import com.openclassrooms.mdd_api.common.web.exception.ApiConflictException;
 import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.subscription.repository.SubscriptionRepository;
+import com.openclassrooms.mdd_api.topic.dto.TopicDto;
 import com.openclassrooms.mdd_api.user.dto.UpdateMeRequest;
 import com.openclassrooms.mdd_api.user.dto.UserMeResponse;
 import com.openclassrooms.mdd_api.user.entity.User;
 import com.openclassrooms.mdd_api.user.repository.UserRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests unitaires de {@link UserService}.
- * SUT: UserService
- * Scope:
- * - getMe(): charge l'utilisateur, mappe vers UserMeResponse (subscriptions vide)
- * - updateMe(): applique email/username/password (validation, normalisation, conflicts, mapping 409)
- * Design:
- * - UserRepository et PasswordEncoder sont mockés
- * - Mockito en mode strict: on ne stubbe que ce qui est effectivement utilisé par le test
+ * Unit tests for {@link UserService}.
  */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock UserRepository userRepository;
+    @Mock SubscriptionRepository subscriptionRepository;
     @Mock PasswordEncoder passwordEncoder;
 
     @InjectMocks UserService userService;
 
     @Test
-    void getMe_returns_profile_with_empty_subscriptions() {
-        // Arrange
-        User u = mock(User.class);
-        when(u.getId()).thenReturn(42L);
-        when(u.getEmail()).thenReturn("user@example.com");
-        when(u.getUsername()).thenReturn("Alice");
-
-        when(userRepository.findById(42L)).thenReturn(Optional.of(u));
-
-        // Act
-        UserMeResponse res = userService.getMe(42L);
-
-        // Assert
-        assertThat(res.id()).isEqualTo(42L);
-        assertThat(res.email()).isEqualTo("user@example.com");
-        assertThat(res.username()).isEqualTo("Alice");
-        assertThat(res.subscriptions()).isNotNull().isEmpty();
-    }
-
-    @Test
-    void getMe_unknown_user_throws_unauthorized() {
-        // Arrange
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
-
-        // Act + Assert
-        assertThatThrownBy(() -> userService.getMe(99L))
-                .isInstanceOf(ApiUnauthorizedException.class)
-                .hasMessage("Unauthorized");
-    }
-
-    @Test
-    void updateMe_unknown_user_throws_unauthorized() {
+    @DisplayName("getMe: 401 si user inexistant")
+    void getMe_unauthorized_whenMissingUser() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest(null, null, null)))
+        assertThatThrownBy(() -> userService.getMe(1L))
                 .isInstanceOf(ApiUnauthorizedException.class)
-                .hasMessage("Unauthorized");
+                .hasMessageContaining("Unauthorized");
+
+        verify(userRepository).findById(1L);
+        verifyNoInteractions(subscriptionRepository);
     }
 
     @Test
-    void updateMe_returns_false_when_request_empty() {
+    @DisplayName("getMe: retourne le profil + subscriptions")
+    void getMe_returnsProfile() {
+        // Arrange
+        User u = mock(User.class);
+        when(u.getId()).thenReturn(1L);
+        when(u.getEmail()).thenReturn("a@b.com");
+        when(u.getUsername()).thenReturn("alice");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        List<TopicDto> subs = List.of(new TopicDto(10L, "Java"));
+        when(subscriptionRepository.findSubscribedTopicsByUserId(1L)).thenReturn(subs);
+
+        // Act
+        UserMeResponse res = userService.getMe(1L);
+
+        // Assert
+        assertThat(res).isEqualTo(new UserMeResponse(1L, "a@b.com", "alice", subs));
+    }
+
+    @Test
+    @DisplayName("updateMe: 401 si user inexistant")
+    void updateMe_unauthorized_whenMissingUser() {
+        // Arrange
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        UpdateMeRequest req = new UpdateMeRequest(null, null, null);
+
+        // Act + Assert
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
+                .isInstanceOf(ApiUnauthorizedException.class)
+                .hasMessageContaining("Unauthorized");
+    }
+
+    @Test
+    @DisplayName("updateMe: retourne false et ne save pas si aucun changement (tout null)")
+    void updateMe_returnsFalse_whenNoChangesAllNull() {
         // Arrange
         User u = mock(User.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+        UpdateMeRequest req = new UpdateMeRequest(null, null, null);
 
         // Act
-        boolean updated = userService.updateMe(1L, new UpdateMeRequest(null, null, null));
+        boolean changed = userService.updateMe(1L, req);
 
         // Assert
-        assertThat(updated).isFalse();
+        assertThat(changed).isFalse();
         verify(userRepository, never()).save(any());
         verify(userRepository, never()).existsByEmailAndIdNot(anyString(), anyLong());
         verify(userRepository, never()).existsByUsernameAndIdNot(anyString(), anyLong());
@@ -98,157 +106,224 @@ class UserServiceTest {
     }
 
     @Test
-    void updateMe_updates_email_normalizes_and_saves() {
-        // Arrange
-        User u = mock(User.class);
-        when(u.getId()).thenReturn(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-        when(userRepository.existsByEmailAndIdNot("new@example.com", 1L)).thenReturn(false);
-
-        // Act
-        boolean updated = userService.updateMe(1L, new UpdateMeRequest("  NEW@Example.Com  ", null, null));
-
-        // Assert
-        assertThat(updated).isTrue();
-        verify(u).setEmail("new@example.com");
-        verify(userRepository).save(u);
-    }
-
-    @Test
-    void updateMe_returns_false_when_email_same() {
-        // Arrange
-        User u = mock(User.class);
-        when(u.getEmail()).thenReturn("user@example.com");
-        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-
-        // Act
-        boolean updated = userService.updateMe(1L, new UpdateMeRequest(" User@Example.Com ", null, null));
-
-        // Assert
-        assertThat(updated).isFalse();
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void updateMe_rejects_blank_email() {
+    @DisplayName("updateMe: 400 si email blank après normalisation")
+    void updateMe_rejectsBlankEmail() {
         // Arrange
         User u = mock(User.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+        UpdateMeRequest req = new UpdateMeRequest("   ", null, null);
 
         // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest("   ", null, null)))
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
                 .isInstanceOf(ApiBadRequestException.class)
-                .hasMessage("Validation error");
+                .hasMessageContaining("Validation error");
 
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void updateMe_rejects_email_conflict() {
+    @DisplayName("updateMe: 400 si username blank après trim")
+    void updateMe_rejectsBlankUsername() {
         // Arrange
         User u = mock(User.class);
-        when(u.getId()).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-        when(userRepository.existsByEmailAndIdNot("taken@example.com", 1L)).thenReturn(true);
+        UpdateMeRequest req = new UpdateMeRequest(null, "   ", null);
 
         // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest("taken@example.com", null, null)))
-                .isInstanceOf(ApiConflictException.class)
-                .hasMessage("Email or username already used");
-
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void updateMe_updates_username_trims_and_saves() {
-        // Arrange
-        User u = mock(User.class);
-        when(u.getId()).thenReturn(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-        when(userRepository.existsByUsernameAndIdNot("Alice", 1L)).thenReturn(false);
-
-        // Act
-        boolean updated = userService.updateMe(1L, new UpdateMeRequest(null, "  Alice  ", null));
-
-        // Assert
-        assertThat(updated).isTrue();
-        verify(u).setUsername("Alice");
-        verify(userRepository).save(u);
-    }
-
-    @Test
-    void updateMe_rejects_blank_username() {
-        // Arrange
-        User u = mock(User.class);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-
-        // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest(null, "   ", null)))
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
                 .isInstanceOf(ApiBadRequestException.class)
-                .hasMessage("Validation error");
+                .hasMessageContaining("Validation error");
 
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void updateMe_rejects_username_conflict() {
-        // Arrange
-        User u = mock(User.class);
-        when(u.getId()).thenReturn(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-        when(userRepository.existsByUsernameAndIdNot("Bob", 1L)).thenReturn(true);
-
-        // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest(null, "Bob", null)))
-                .isInstanceOf(ApiConflictException.class)
-                .hasMessage("Email or username already used");
-
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void updateMe_rejects_invalid_password_policy() {
+    @DisplayName("updateMe: 400 si password ne respecte pas la policy (et n'encode pas)")
+    void updateMe_rejectsInvalidPasswordPolicy() {
         // Arrange
         User u = mock(User.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(u));
 
+        UpdateMeRequest req = new UpdateMeRequest(null, null, "short");
+
         // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest(null, null, "short")))
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
                 .isInstanceOf(ApiBadRequestException.class)
-                .hasMessage("Password policy not respected");
+                .hasMessageContaining("Password policy not respected");
 
         verifyNoInteractions(passwordEncoder);
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void updateMe_updates_password_encodes_and_saves() {
+    @DisplayName("updateMe: retourne false si email inchangé après trim+lower (aucune vérif d'unicité)")
+    void updateMe_returnsFalse_whenEmailUnchangedAfterNormalize() {
+        // Arrange
+        // IMPORTANT: ici, on ne stubbe PAS existsByEmailAndIdNot(...) car il ne doit jamais être appelé.
+        User u = mock(User.class);
+        when(u.getEmail()).thenReturn("user@example.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        UpdateMeRequest req = new UpdateMeRequest("  USER@Example.COM  ", null, null);
+
+        // Act
+        boolean changed = userService.updateMe(1L, req);
+
+        // Assert
+        assertThat(changed).isFalse();
+        verify(userRepository, never()).existsByEmailAndIdNot(anyString(), anyLong());
+        verify(u, never()).setEmail(anyString());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateMe: retourne false si username inchangé après trim (aucune vérif d'unicité)")
+    void updateMe_returnsFalse_whenUsernameUnchangedAfterTrim() {
+        // Arrange
+        User u = mock(User.class);
+        when(u.getUsername()).thenReturn("Alice");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        UpdateMeRequest req = new UpdateMeRequest(null, "  Alice  ", null);
+
+        // Act
+        boolean changed = userService.updateMe(1L, req);
+
+        // Assert
+        assertThat(changed).isFalse();
+        verify(userRepository, never()).existsByUsernameAndIdNot(anyString(), anyLong());
+        verify(u, never()).setUsername(anyString());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateMe: 409 si email déjà utilisé par un autre user")
+    void updateMe_conflict_whenEmailAlreadyUsed() {
+        // Arrange
+        User u = mock(User.class);
+        when(u.getId()).thenReturn(1L);
+        when(u.getEmail()).thenReturn("old@example.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        when(userRepository.existsByEmailAndIdNot("new@example.com", 1L)).thenReturn(true);
+
+        UpdateMeRequest req = new UpdateMeRequest("  New@Example.Com ", null, null);
+
+        // Act + Assert
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
+                .isInstanceOf(ApiConflictException.class)
+                .hasMessageContaining("Email or username already used");
+
+        verify(u, never()).setEmail(anyString());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateMe: 409 si username déjà utilisé par un autre user")
+    void updateMe_conflict_whenUsernameAlreadyUsed() {
+        // Arrange
+        User u = mock(User.class);
+        when(u.getId()).thenReturn(1L);
+        when(u.getUsername()).thenReturn("old");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        when(userRepository.existsByUsernameAndIdNot("NewName", 1L)).thenReturn(true);
+
+        UpdateMeRequest req = new UpdateMeRequest(null, "  NewName  ", null);
+
+        // Act + Assert
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
+                .isInstanceOf(ApiConflictException.class)
+                .hasMessageContaining("Email or username already used");
+
+        verify(u, never()).setUsername(anyString());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateMe: met à jour l'email (normalize) et save")
+    void updateMe_updatesEmail_andSaves() {
+        // Arrange
+        User u = mock(User.class);
+        when(u.getId()).thenReturn(1L);
+        when(u.getEmail()).thenReturn("old@example.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        when(userRepository.existsByEmailAndIdNot("new@example.com", 1L)).thenReturn(false);
+
+        UpdateMeRequest req = new UpdateMeRequest("  New@Example.Com ", null, null);
+
+        // Act
+        boolean changed = userService.updateMe(1L, req);
+
+        // Assert
+        assertThat(changed).isTrue();
+        verify(u).setEmail("new@example.com");
+        verify(userRepository).save(u);
+    }
+
+    @Test
+    @DisplayName("updateMe: met à jour le username (trim) et save")
+    void updateMe_updatesUsername_andSaves() {
+        // Arrange
+        User u = mock(User.class);
+        when(u.getId()).thenReturn(1L);
+        when(u.getUsername()).thenReturn("old");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
+        when(userRepository.existsByUsernameAndIdNot("NewName", 1L)).thenReturn(false);
+
+        UpdateMeRequest req = new UpdateMeRequest(null, "  NewName  ", null);
+
+        // Act
+        boolean changed = userService.updateMe(1L, req);
+
+        // Assert
+        assertThat(changed).isTrue();
+        verify(u).setUsername("NewName");
+        verify(userRepository).save(u);
+    }
+
+    @Test
+    @DisplayName("updateMe: met à jour le password (policy ok) et save le hash encodé")
+    void updateMe_updatesPassword_andSavesEncodedHash() {
         // Arrange
         User u = mock(User.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(u));
-        when(passwordEncoder.encode("Aa1!aaaa")).thenReturn("ENC");
+
+        // Doit respecter la policy du service: >=8 + lower/upper/digit/special
+        String raw = "Abcdef1!";
+        when(passwordEncoder.encode(raw)).thenReturn("ENC");
+
+        UpdateMeRequest req = new UpdateMeRequest(null, null, raw);
 
         // Act
-        boolean updated = userService.updateMe(1L, new UpdateMeRequest(null, null, "Aa1!aaaa"));
+        boolean changed = userService.updateMe(1L, req);
 
         // Assert
-        assertThat(updated).isTrue();
+        assertThat(changed).isTrue();
+        verify(passwordEncoder).encode(raw);
         verify(u).setPasswordHash("ENC");
         verify(userRepository).save(u);
     }
 
     @Test
-    void updateMe_maps_data_integrity_violation_to_409() {
+    @DisplayName("updateMe: mappe DataIntegrityViolationException en 409")
+    void updateMe_mapsDataIntegrityViolation_toConflict() {
         // Arrange
         User u = mock(User.class);
         when(u.getId()).thenReturn(1L);
+        when(u.getEmail()).thenReturn("old@example.com");
         when(userRepository.findById(1L)).thenReturn(Optional.of(u));
+
         when(userRepository.existsByEmailAndIdNot("new@example.com", 1L)).thenReturn(false);
-        doThrow(new DataIntegrityViolationException("boom")).when(userRepository).save(u);
+        doThrow(new DataIntegrityViolationException("dup")).when(userRepository).save(u);
+
+        UpdateMeRequest req = new UpdateMeRequest("new@example.com", null, null);
 
         // Act + Assert
-        assertThatThrownBy(() -> userService.updateMe(1L, new UpdateMeRequest("new@example.com", null, null)))
+        assertThatThrownBy(() -> userService.updateMe(1L, req))
                 .isInstanceOf(ApiConflictException.class)
-                .hasMessage("Email or username already used");
+                .hasMessageContaining("Email or username already used");
     }
 }

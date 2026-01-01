@@ -191,6 +191,15 @@
                                 <exclude>com/openclassrooms/mdd_api/user/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/auth/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/user/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/topic/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/topic/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/topic/bootstrap/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/subscription/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/subscription/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/post/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/post/bootstrap/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/feed/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/comment/entity/**</exclude>
 
                             </excludes>
                         </configuration>
@@ -208,6 +217,15 @@
                                 <exclude>com/openclassrooms/mdd_api/user/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/auth/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/user/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/topic/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/topic/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/topic/bootstrap/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/subscription/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/subscription/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/post/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/post/bootstrap/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/feed/dto/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/comment/entity/**</exclude>
                             </excludes>
 
                             <rules>
