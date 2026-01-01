@@ -8,6 +8,7 @@ import com.openclassrooms.mdd_api.auth.service.AuthService;
 import com.openclassrooms.mdd_api.common.config.OcAppProperties;
 import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.HttpHeaders.SET_COOKIE;
 
 /**
  * Important  :
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private static final String REFRESH_COOKIE_NAME = "refreshToken";
+    private static final String XSRF_HEADER = "X-XSRF-TOKEN";
 
     private final AuthService authService;
     private final OcAppProperties props;
@@ -39,8 +43,10 @@ public class AuthController {
     @Operation(summary = "Init CSRF cookie (SPA)")
     @ApiResponse(responseCode = "204", description = "CSRF cookie issued (XSRF-TOKEN)")
     @GetMapping("/csrf")
-    public ResponseEntity<Void> csrf(CsrfToken token) {
-        token.getToken();
+    public ResponseEntity<Void> csrf(
+            @Parameter(hidden = true)
+            @RequestAttribute(name = "_csrf", required = false) CsrfToken token
+    ) {
         return ResponseEntity.noContent().build();
     }
 
@@ -50,7 +56,10 @@ public class AuthController {
     @ApiResponse(responseCode = "409", description = "Email/username already used")
     @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
     @PostMapping("/register")
-    public ResponseEntity<IdResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<IdResponse> register(
+            @RequestHeader(name = XSRF_HEADER, required = false) String xsrfToken,
+            @Valid @RequestBody RegisterRequest request
+    ) {
         Long id = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new IdResponse(id));
     }
@@ -61,11 +70,14 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<TokenResponse> login(
+            @RequestHeader(name = XSRF_HEADER, required = false) String xsrfToken,
+            @Valid @RequestBody LoginRequest request
+    ) {
         var bundle = authService.login(request);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, buildRefreshCookie(bundle.refreshTokenRaw()).toString())
+                .header(SET_COOKIE, buildRefreshCookie(bundle.refreshTokenRaw()).toString())
                 .body(bundle.tokenResponse());
     }
 
@@ -75,6 +87,7 @@ public class AuthController {
     @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(
+            @RequestHeader(name = XSRF_HEADER, required = false) String xsrfToken,
             @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String refreshToken
     ) {
         if (refreshToken == null || refreshToken.isBlank()) {
@@ -95,6 +108,7 @@ public class AuthController {
     @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
+            @RequestHeader(name = XSRF_HEADER, required = false) String xsrfToken,
             @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String refreshToken
     ) {
         authService.logout(refreshToken);

@@ -37,6 +37,7 @@ public class SubscriptionController {
     @ApiResponse(responseCode = "409", description = "Already subscribed")
     public ResponseEntity<IdResponse> subscribe(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(name = "X-XSRF-TOKEN", required = false) String xsrfToken,
             @Valid @RequestBody SubscribeRequest req
     ) {
         Long userId = parseUserId(jwt);
@@ -52,6 +53,7 @@ public class SubscriptionController {
     @ApiResponse(responseCode = "403", description = "CSRF missing/invalid")
     public ResponseEntity<Void> unsubscribe(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(name = "X-XSRF-TOKEN", required = false) String xsrfToken,
             @PathVariable Long topicId
     ) {
         Long userId = parseUserId(jwt);

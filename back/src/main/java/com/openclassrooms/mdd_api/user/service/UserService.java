@@ -5,6 +5,8 @@ import com.openclassrooms.mdd_api.common.web.exception.ApiBadRequestException;
 import com.openclassrooms.mdd_api.common.web.exception.ApiConflictException;
 import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
 import com.openclassrooms.mdd_api.common.web.response.FieldErrorItem;
+import com.openclassrooms.mdd_api.subscription.repository.SubscriptionRepository;
+import com.openclassrooms.mdd_api.topic.dto.TopicDto;
 import com.openclassrooms.mdd_api.user.dto.UpdateMeRequest;
 import com.openclassrooms.mdd_api.user.dto.UserMeResponse;
 import com.openclassrooms.mdd_api.user.entity.User;
@@ -25,13 +27,17 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public UserMeResponse getMe(Long userId) {
-        User u = userRepository.findById(userId).orElseThrow(() -> new ApiUnauthorizedException("Unauthorized"));
-        // subscriptions : feature topic/subscription à venir -> liste vide pour l’instant
-        return new UserMeResponse(u.getId(), u.getEmail(), u.getUsername(), List.of());
+        User u = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiUnauthorizedException("Unauthorized"));
+
+        List<TopicDto> subscriptions = subscriptionRepository.findSubscribedTopicsByUserId(userId);
+
+        return new UserMeResponse(u.getId(), u.getEmail(), u.getUsername(), subscriptions);
     }
 
     /**
