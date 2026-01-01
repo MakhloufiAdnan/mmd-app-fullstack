@@ -5,14 +5,12 @@ import com.openclassrooms.mdd_api.topic.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Component
-@Profile("dev") // hypothèse : seed uniquement en dev (safer que seed prod)
 @RequiredArgsConstructor
 public class TopicSeeder implements ApplicationRunner {
 
