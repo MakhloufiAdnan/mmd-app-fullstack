@@ -17,7 +17,7 @@ export class UserMeApiService {
 
   /**
    * Récupère le profil courant.
-   * Endpoint : GET /api/users/me 
+   * Endpoint : GET /api/users/me
    */
   me(): Observable<UserMeResponse> {
     return this.http.get<UserMeResponse>('/api/users/me', { withCredentials: true });
@@ -25,11 +25,19 @@ export class UserMeApiService {
 
   /**
    * Met à jour le profil courant.
-   * Endpoint : PUT /api/users/me 
-   *
-   * @param payload Champs à modifier (les champs absents ne seront pas modifiés).
+   * Endpoint : PUT /api/users/me
    */
   updateMe(payload: UpdateMeRequest): Observable<UpdatedResponse> {
     return this.http.put<UpdatedResponse>('/api/users/me', payload, { withCredentials: true });
+  }
+
+  /**
+   * Se désabonner d'un thème.
+   * Endpoint : DELETE /api/users/me/subscriptions/{topicId}
+   */
+  unsubscribeFromTopic(topicId: number): Observable<void> {
+    return this.http.delete<void>(`/api/users/me/subscriptions/${topicId}`, {
+      withCredentials: true,
+    });
   }
 }

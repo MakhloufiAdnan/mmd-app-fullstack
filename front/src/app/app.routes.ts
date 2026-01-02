@@ -41,13 +41,11 @@ export const routes: Routes = [
           import('./features/profile/pages/profile/profile').then((m) => m.Profile),
       },
 
-      /**
-       * Todo :
-       * - la page Thèmes n'est pas encore créée
-       * - pour éviter une 404 je redirige vers le feed
-       * A remplacer lorsque features/topics est créé.
-       */
-      { path: 'topics', redirectTo: 'feed', pathMatch: 'full' },
+      {
+        path: 'topics',
+        loadComponent: () =>
+          import('./features/topics/pages/topics/topics').then((m) => m.TopicsComponent),
+      },
     ],
   },
 

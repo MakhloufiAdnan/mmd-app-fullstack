@@ -4,23 +4,23 @@
       <mat-card-title>Mon profil</mat-card-title>
 
       @if (me(); as meData) {
-        <mat-card-subtitle>#{{ meData.id }}</mat-card-subtitle>
+      <mat-card-subtitle>#{{ meData.id }}</mat-card-subtitle>
       }
     </mat-card-header>
 
     <mat-card-content>
       @if (loading()) {
-        <div class="spinner">
-          <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
-        </div>
-      } @else {
+      <div class="spinner">
+        <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+      </div>
+      } @else { 
         @if (globalError(); as err) {
-          <p class="error">{{ err }}</p>
-        }
+      <p class="error">{{ err }}</p>
+      }
 
-        <form [formGroup]="form" (ngSubmit)="submit()">
-          <mat-form-field appearance="outline" class="field">
-            <mat-label>Email</mat-label>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline" class="field">
+          <mat-label>Email</mat-label>
             <input
               matInput
               type="email"
@@ -29,61 +29,61 @@
               autocomplete="email"
             />
 
-            @if (form.controls.email.hasError('required')) {
-              <mat-error>Email requis.</mat-error>
-            } @else if (form.controls.email.hasError('email')) {
-              <mat-error>Email invalide.</mat-error>
-            } @else if (fieldErrors()?.email?.length) {
-              <mat-error>{{ fieldErrors()!.email![0] }}</mat-error>
-            }
-          </mat-form-field>
+          @if (form.controls.email.hasError('required')) {
+          <mat-error>Email requis.</mat-error>
+          } @else if (form.controls.email.hasError('email')) {
+          <mat-error>Email invalide.</mat-error>
+          } @else if (fieldErrors()?.email?.length) {
+          <mat-error>{{ fieldErrors()!.email![0] }}</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="field">
-            <mat-label>Nom d'utilisateur</mat-label>
-            <input
-              matInput
-              type="text"
-              name="username"
-              formControlName="username"
-              autocomplete="username"
-            />
+        <mat-form-field appearance="outline" class="field">
+          <mat-label>Nom d'utilisateur</mat-label>
+          <input
+            matInput
+            type="text"
+            name="username"
+            formControlName="username"
+            autocomplete="username"
+          />
 
-            @if (form.controls.username.hasError('required')) {
-              <mat-error>Nom d'utilisateur requis.</mat-error>
-            } @else if (fieldErrors()?.username?.length) {
-              <mat-error>{{ fieldErrors()!.username![0] }}</mat-error>
-            }
-          </mat-form-field>
+          @if (form.controls.username.hasError('required')) {
+          <mat-error>Nom d'utilisateur requis.</mat-error>
+          } @else if (fieldErrors()?.username?.length) {
+          <mat-error>{{ fieldErrors()!.username![0] }}</mat-error>
+          }
+        </mat-form-field>
 
-          <mat-form-field appearance="outline" class="field">
+        <mat-form-field appearance="outline" class="field">
             <mat-label>Nouveau mot de passe (optionnel)</mat-label>
-            <input
-              matInput
-              type="password"
-              name="new-password"
-              formControlName="password"
-              autocomplete="new-password"
-            />
-            <mat-hint>Min 8 + 1 chiffre + 1 minuscule + 1 majuscule + 1 spécial.</mat-hint>
+          <input
+            matInput
+            type="password"
+            name="new-password"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          <mat-hint>Min 8 + 1 chiffre + 1 minuscule + 1 majuscule + 1 spécial.</mat-hint>
 
-            @if (form.controls.password.hasError('passwordPolicy')) {
-              <mat-error>Le mot de passe ne respecte pas la politique.</mat-error>
-            } @else if (fieldErrors()?.password?.length) {
-              <mat-error>{{ fieldErrors()!.password![0] }}</mat-error>
-            }
-          </mat-form-field>
+          @if (form.controls.password.hasError('passwordPolicy')) {
+          <mat-error>Le mot de passe ne respecte pas la politique.</mat-error>
+          } @else if (fieldErrors()?.password?.length) {
+          <mat-error>{{ fieldErrors()!.password![0] }}</mat-error>
+          }
+        </mat-form-field>
 
-          <div class="actions">
-            <button
-              mat-raised-button
-              color="primary"
-              type="submit"
-              [disabled]="saving() || loading() || isPristine()"
-            >
-              Enregistrer
-            </button>
-          </div>
-        </form>
+        <div class="actions">
+          <button class="mdd-btn"
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="saving() || loading() || isPristine()"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </form>
       }
     </mat-card-content>
   </mat-card>
@@ -94,18 +94,35 @@
     </mat-card-header>
 
     <mat-card-content>
-      @if (me(); as meData) {
+      @if (me(); as meData) { 
         @if (meData.subscriptions.length) {
-          <mat-list>
-            @for (s of meData.subscriptions; track s.id) {
-              <mat-list-item>{{ s.name }}</mat-list-item>
-            }
-          </mat-list>
-        } @else {
-          <p>Aucun abonnement pour le moment.</p>
+      <mat-list>
+        @for (s of meData.subscriptions; track s.id) {
+        <mat-list-item>
+          <div class="sub-row">
+            <span class="sub-name">{{ s.name }}</span>
+
+            <button
+              class="mdd-btn" 
+              mat-flat-button color="primary"
+              type="button"
+              (click)="unsubscribe(s.id)"
+              [disabled]="unsubPendingIds().has(s.id)"
+              [attr.data-testid]="'unsubscribe-' + s.id"
+            >
+              @if (unsubPendingIds().has(s.id)) {
+              <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+              } Se désabonner
+            </button>
+          </div>
+        </mat-list-item>
         }
+      </mat-list>
       } @else {
-        <p>Chargement…</p>
+      <p>Aucun abonnement pour le moment.</p>
+      } 
+    } @else {
+      <p>Chargement…</p>
       }
     </mat-card-content>
   </mat-card>

@@ -14,11 +14,12 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { passwordPolicyValidator } from '@shared/validators/password-policy.validator';
 import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
+
 import { UserMeApiService } from '../../services/user-me-api.service';
 import type {
-  UpdateMeRequest,
   UpdatedResponse,
   UserMeResponse,
+  UpdateMeRequest,
 } from '../../interfaces/user-me.models';
 
 /**
@@ -69,6 +70,9 @@ export class Profile implements OnInit {
   readonly loading = signal(true);
   readonly saving = signal(false);
 
+  /** UI : topics en cours de désabonnement (évite double-clic). */
+  readonly unsubPendingIds = signal<Set<number>>(new Set());
+
   /** Erreurs */
   readonly globalError = signal<string | null>(null);
   readonly fieldErrors = signal<ProfileFieldErrors | null>(null);
@@ -97,8 +101,6 @@ export class Profile implements OnInit {
 
   /**
    * True si aucune modification n'est présente (désactive "Enregistrer").
-   * - Computed dépend de 2 signaux : `initialMe()` et `formValue()`.
-   * - Ainsi il se recalculera quand je tape dans le mot de passe.
    */
   readonly isPristine = computed(() => {
     const init = this.initialMe();
@@ -139,25 +141,19 @@ export class Profile implements OnInit {
     });
   }
 
-  /**
-   * Soumet PUT /api/users/me.
-   */
   submit(): void {
+    if (this.form.invalid) return;
+
+    this.saving.set(true);
     this.globalError.set(null);
     this.fieldErrors.set(null);
 
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    const payload = this.buildUpdatePayload();
-    if (!payload) {
-      this.snackBar.open('Aucune modification à enregistrer.', 'OK', { duration: 2500 });
-      return;
-    }
-
-    this.saving.set(true);
+    const raw = this.form.getRawValue();
+    const payload: UpdateMeRequest = {
+      email: raw.email,
+      username: raw.username,
+      password: raw.password?.trim() ? raw.password : null,
+    };
 
     const update$ = this.api.updateMe(payload).pipe(
       finalize(() => this.saving.set(false)),
@@ -165,47 +161,62 @@ export class Profile implements OnInit {
     );
 
     update$.subscribe({
-      next: (res: UpdatedResponse) => {
-        if (res.updated) {
-          const v = this.form.getRawValue();
-          this.initialMe.set({ email: v.email, username: v.username });
-
-          // Vide le password après update
-          this.form.controls.password.reset('');
-
-          this.loadMe();
-          this.snackBar.open('Profil mis à jour ✅', 'OK', { duration: 2500 });
-        } else {
-          this.snackBar.open('Aucune modification détectée.', 'OK', { duration: 2500 });
-        }
+      next: (_res: UpdatedResponse) => {
+        this.snackBar.open('Profil mis à jour.', 'OK', { duration: 2000 });
+        this.loadMe();
       },
       error: (err: unknown) => this.handleError(err),
     });
   }
 
   /**
-   * Payload minimal : uniquement les champs modifiés.
-   * @returns payload si changement, sinon `null`
+   * Se désabonner d'un thème (depuis le profil).
+   * Endpoint : DELETE /api/users/me/subscriptions/{topicId}
    */
-  private buildUpdatePayload(): UpdateMeRequest | null {
-    const init = this.initialMe();
-    if (!init) return null;
+  unsubscribe(topicId: number): void {
+    // Garde-fou : empêche le double-clic (UX) et évite les appels inutiles.
+    if (this.unsubPendingIds().has(topicId)) return;
 
-    const v = this.form.getRawValue();
-    const payload: UpdateMeRequest = {};
+    this.setUnsubPending(topicId, true);
+    this.globalError.set(null);
 
-    if (v.email !== init.email) payload.email = v.email;
-    if (v.username !== init.username) payload.username = v.username;
+    const unsubscribe$ = this.api.unsubscribeFromTopic(topicId).pipe(
+      finalize(() => this.setUnsubPending(topicId, false)),
+      takeUntilDestroyed(this.destroyRef)
+    );
 
-    const pwd = v.password?.trim();
-    if (pwd) payload.password = pwd;
+    unsubscribe$.subscribe({
+      next: () => {
+        const current = this.me();
+        if (!current) return;
 
-    return Object.keys(payload).length ? payload : null;
+        // Update optimiste : on retire le thème de la liste affichée
+        this.me.set({
+          ...current,
+          subscriptions: current.subscriptions.filter((s) => s.id !== topicId),
+        });
+
+        this.snackBar.open('Abonnement supprimé.', 'OK', { duration: 2000 });
+      },
+      error: (err: unknown) => {
+        if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
+          this.snackBar.open(err.error.message, 'OK', { duration: 3000 });
+          return;
+        }
+        this.snackBar.open('Une erreur est survenue. Réessaie plus tard.', 'OK', {
+          duration: 3000,
+        });
+      },
+    });
   }
 
-  /**
-   * Normalisation erreurs API.
-   */
+  private setUnsubPending(topicId: number, isPending: boolean): void {
+    const next = new Set(this.unsubPendingIds());
+    if (isPending) next.add(topicId);
+    else next.delete(topicId);
+    this.unsubPendingIds.set(next);
+  }
+
   private handleError(err: unknown): void {
     if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
       this.globalError.set(err.error.message);

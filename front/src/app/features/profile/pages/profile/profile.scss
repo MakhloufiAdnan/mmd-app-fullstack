@@ -26,3 +26,14 @@
   justify-content: center;
   padding: 24px 0;
 }
+.sub-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sub-name {
+  flex: 1;
+}
