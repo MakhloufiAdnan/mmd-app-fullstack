@@ -12,7 +12,7 @@ public class DotenvConfig {
     public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
         configurer.setLocation(new FileSystemResource(".env"));
-        configurer.setIgnoreResourceNotFound(true); // avoids breaking CI if .env is absent
+        configurer.setIgnoreResourceNotFound(true);
         return configurer;
     }
 }

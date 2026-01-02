@@ -2,6 +2,7 @@ package com.openclassrooms.mdd_api.common.web.handler;
 
 import com.openclassrooms.mdd_api.common.web.exception.ApiBadRequestException;
 import com.openclassrooms.mdd_api.common.web.exception.ApiConflictException;
+import com.openclassrooms.mdd_api.common.web.exception.ApiNotFoundException;
 import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
 import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
 import com.openclassrooms.mdd_api.common.web.response.ApiErrorResponse;
@@ -149,6 +150,17 @@ public class RestExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 ApiErrorCodes.INTERNAL,
                 "Internal error",
+                List.of()
+        );
+    }
+
+    // 404 - Not found
+    @ExceptionHandler(ApiNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotFound(ApiNotFoundException ex) {
+        return createErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ApiErrorCodes.NOT_FOUND,
+                ex.getMessage(),
                 List.of()
         );
     }

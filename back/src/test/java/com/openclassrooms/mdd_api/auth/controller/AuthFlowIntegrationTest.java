@@ -2,12 +2,10 @@ package com.openclassrooms.mdd_api.auth.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openclassrooms.mdd_api.auth.repository.RefreshTokenRepository;
 import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
 import com.openclassrooms.mdd_api.support.AbstractMySqlIntegrationTest;
 import com.openclassrooms.mdd_api.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -40,21 +38,10 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
     @Autowired ObjectMapper objectMapper;
 
     @Autowired UserRepository userRepository;
-    @Autowired RefreshTokenRepository refreshTokenRepository;
 
     private record RegisterPayload(String email, String username, String password) {}
     private record LoginPayload(String identifier, String password) {}
     private record CsrfBundle(String token, Cookie cookie) {}
-
-    /**
-     * Nettoie la DB entre les tests.
-     */
-    @BeforeEach
-    void resetDatabase() {
-        // Arrange (DB clean)
-        refreshTokenRepository.deleteAllInBatch();
-        userRepository.deleteAllInBatch();
-    }
 
     @Test
     void happy_path_csrf_register_login_refresh_logout() throws Exception {
@@ -75,12 +62,8 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andExpect(jsonPath("$.id").isNumber());
 
         // Assert (normalisation côté back)
-        assertThat(userRepository.findByEmail("user@example.com"))
-                .as("Email normalisé en lowercase")
-                .isPresent();
-        assertThat(userRepository.findByUsername("Alice"))
-                .as("Username trim côté back")
-                .isPresent();
+        assertThat(userRepository.findByEmail("user@example.com")).isPresent();
+        assertThat(userRepository.findByUsername("Alice")).isPresent();
 
         // Arrange (login)
         String loginBody = objectMapper.writeValueAsString(new LoginPayload(" user@example.com ", "Aa1!aaaa"));
@@ -93,7 +76,6 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                         .header(CSRF_HEADER, csrf.token()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                // Contrat : accessToken + tokenType + expiresInSeconds
                 .andExpect(jsonPath("$.accessToken").isString())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresInSeconds").isNumber())
@@ -106,12 +88,8 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                 REFRESH_COOKIE
         );
 
-        assertThat(accessToken)
-                .as("Access token non vide")
-                .isNotBlank();
-        assertThat(refreshToken)
-                .as("Refresh token en cookie HttpOnly")
-                .isNotBlank();
+        assertThat(accessToken).isNotBlank();
+        assertThat(refreshToken).isNotBlank();
 
         Cookie refreshCookie = new Cookie(REFRESH_COOKIE, refreshToken);
         refreshCookie.setPath("/api/auth");
@@ -136,10 +114,7 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         );
 
         assertThat(accessToken2).isNotBlank();
-        assertThat(refreshToken2)
-                .as("Refresh token rotaté")
-                .isNotBlank()
-                .isNotEqualTo(refreshToken);
+        assertThat(refreshToken2).isNotBlank().isNotEqualTo(refreshToken);
 
         Cookie refreshCookie2 = new Cookie(REFRESH_COOKIE, refreshToken2);
         refreshCookie2.setPath("/api/auth");
@@ -159,7 +134,6 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         );
 
         assertThat(deleteSetCookie)
-                .as("Logout doit supprimer le refresh cookie")
                 .contains(REFRESH_COOKIE + "=")
                 .contains("Max-Age=0")
                 .contains("Path=/api/auth");
@@ -179,14 +153,12 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                         .content(loginBody)
                         .cookie(csrf.cookie())
                         .header(CSRF_HEADER, csrf.token()))
-                // Assert
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.message").isString())
                 .andReturn();
 
-        // Assert (message non vide)
         assertThat(readJson(res).get("message").asText()).isNotBlank();
     }
 
@@ -206,7 +178,6 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                         .content(body)
                         .cookie(csrf.cookie())
                         .header(CSRF_HEADER, csrf.token()))
-                // Assert
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.error").value("CONFLICT"))
@@ -231,7 +202,7 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         Cookie refreshCookie = new Cookie(REFRESH_COOKIE, refreshToken);
         refreshCookie.setPath("/api/auth");
 
-        // Act + Assert (pas de header CSRF => 403)
+        // Act + Assert
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf.cookie(), refreshCookie))
@@ -265,7 +236,7 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         // Arrange
         CsrfBundle csrf = initCsrf();
 
-        // Act + Assert (pas de cookie refreshToken)
+        // Act + Assert
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf.cookie())
@@ -285,7 +256,7 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         Cookie blankRefresh = new Cookie(REFRESH_COOKIE, "   ");
         blankRefresh.setPath("/api/auth");
 
-        // Act + Assert (cookie présent mais blank)
+        // Act + Assert
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf.cookie(), blankRefresh)
@@ -297,20 +268,13 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andExpect(jsonPath("$.fieldErrors").isArray());
     }
 
+    // Helpers
 
-    // Helpers (test only)
-
-    /**
-     * Appelle le endpoint public CSRF et retourne token + cookie.
-     * Contrat : {@code GET /api/auth/csrf} -> 204 + Set-Cookie XSRF-TOKEN.
-     */
     private CsrfBundle initCsrf() throws Exception {
-        // Arrange + Act
         MvcResult res = mockMvc.perform(get("/api/auth/csrf"))
                 .andExpect(status().isNoContent())
                 .andReturn();
 
-        // Assert
         String csrfToken = extractCookieValueFromSetCookieHeaders(
                 res.getResponse().getHeaders(HttpHeaders.SET_COOKIE),
                 CSRF_COOKIE
@@ -323,10 +287,8 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     private void register(CsrfBundle csrf, String email, String username, String password) throws Exception {
-        // Arrange
         String body = objectMapper.writeValueAsString(new RegisterPayload(email, username, password));
 
-        // Act + Assert
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
@@ -337,16 +299,13 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     private MvcResult login(CsrfBundle csrf, String identifier, String password) throws Exception {
-        // Arrange
         String body = objectMapper.writeValueAsString(new LoginPayload(identifier, password));
 
-        // Act
         return mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
                         .cookie(csrf.cookie())
                         .header(CSRF_HEADER, csrf.token()))
-                // Assert
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isString())
                 .andReturn();
@@ -371,9 +330,7 @@ class AuthFlowIntegrationTest extends AbstractMySqlIntegrationTest {
         if (end < 0) end = header.length();
 
         String value = header.substring(start, end);
-        assertThat(value)
-                .as("Cookie %s doit être présent".formatted(cookieName))
-                .isNotBlank();
+        assertThat(value).isNotBlank();
 
         return value;
     }
