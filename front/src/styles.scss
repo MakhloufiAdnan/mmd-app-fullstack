@@ -23,6 +23,7 @@ $article-surface: #f5f5f5;
     )
   );
 
+  // Couleur globale des boutons "filled" (mat-flat-button)
   @include mat.button-overrides(
     (
       filled-container-color: #{$primary},
@@ -31,21 +32,73 @@ $article-surface: #f5f5f5;
   );
 }
 
+// Base (taille + layout)
+.mdd-btn,
+.auth-submit {
+  min-width: 140px;
+  height: 40px;
+  align-self: center;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  // Best effort
+  --mdc-filled-button-container-shape: 5px;
+}
+
+// Forme + clipping ripple (le plus important)
+.mdd-btn.mat-mdc-button-base,
+.auth-submit.mat-mdc-button-base {
+  border-radius: 5px !important;
+  overflow: hidden; // clippe le ripple aux coins arrondis
+}
+
+// Couches internes MDC à arrondir aussi
+.mdd-btn.mat-mdc-button-base .mdc-button__ripple,
+.mdd-btn.mat-mdc-button-base .mat-mdc-button-persistent-ripple,
+.mdd-btn.mat-mdc-button-base .mat-mdc-button-touch-target,
+.auth-submit.mat-mdc-button-base .mdc-button__ripple,
+.auth-submit.mat-mdc-button-base .mat-mdc-button-persistent-ripple,
+.auth-submit.mat-mdc-button-base .mat-mdc-button-touch-target {
+  border-radius: 5px !important;
+}
+
+// Variante "plein largeur" (utile mobile)
+.mdd-btn--full {
+  width: 100%;
+}
+
+// Petit helper spinner inline (si tu mets un mat-progress-spinner dans le bouton)
+.mdd-btn-spinner {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ================================
+   Reset / global layout
+   ================================ */
+
 * {
   box-sizing: border-box;
 }
+
 html,
 body {
   height: 100%;
 }
+
 body {
   margin: 0;
 }
 
+/* Fond commun des pages (Topics/Feed…) */
 .mdd-article {
   background: $article-surface;
 }
 
+/* Drawer backdrop */
 .mat-drawer-backdrop.mat-drawer-shown {
   background-color: rgba(0, 0, 0, 0.3);
 }

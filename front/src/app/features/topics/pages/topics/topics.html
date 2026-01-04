@@ -1,0 +1,37 @@
+<mat-card class="page">
+  <h1>Thèmes</h1>
+  <mat-divider></mat-divider>
+
+  @if (vm$ | async; as vm) { @if (vm.loading) {
+  <div class="center">
+    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+  </div>
+  } @else { @if (vm.error) {
+  <p class="error">{{ vm.error }}</p>
+  } @if (vm.topics.length === 0 && !vm.error) {
+  <p>Aucun thème disponible.</p>
+  } @else {
+  <div class="topics">
+    @for (topic of vm.topics; track trackById($index, topic)) {
+    <mat-card class="topic-card">
+      <div class="topic-row">
+        <div class="topic-name">{{ topic.name }}</div>
+
+        <button
+          class="mdd-btn" 
+          mat-flat-button 
+          color="primary"
+          type="button"
+          (click)="onSubscribe(topic.id)"
+          [disabled]="topic.subscribed || vm.pendingIds.has(topic.id)"
+        >
+          @if (vm.pendingIds.has(topic.id)) {
+          <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+          } @if (topic.subscribed) { Déjà abonné } @else { S’abonner }
+        </button>
+      </div>
+    </mat-card>
+    }
+  </div>
+  } } }
+</mat-card>
