@@ -1,6 +1,6 @@
 package com.openclassrooms.mdd_api.feed.controller;
 
-import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.common.security.CurrentUserIdExtractor;
 import com.openclassrooms.mdd_api.feed.dto.FeedItemDto;
 import com.openclassrooms.mdd_api.feed.service.FeedService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +30,7 @@ import java.util.List;
 public class FeedController {
 
     private final FeedService feedService;
+    private final CurrentUserIdExtractor currentUserIdExtractor;
 
     @GetMapping
     @Operation(summary = "Get feed (articles) based on current user's subscriptions")
@@ -41,18 +42,7 @@ public class FeedController {
             @RequestParam(name = "order", required = false) String order,
             @RequestParam(name = "topicId", required = false) Long topicId
     ) {
-        Long userId = parseUserId(jwt);
+        Long userId = currentUserIdExtractor.requireUserId(jwt);
         return ResponseEntity.ok(feedService.getFeed(userId, order, topicId));
-    }
-
-    private Long parseUserId(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
-        try {
-            return Long.valueOf(jwt.getSubject());
-        } catch (NumberFormatException e) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
     }
 }

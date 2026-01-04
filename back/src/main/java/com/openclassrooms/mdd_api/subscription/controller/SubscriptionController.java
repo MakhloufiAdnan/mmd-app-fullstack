@@ -1,6 +1,6 @@
 package com.openclassrooms.mdd_api.subscription.controller;
 
-import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.common.security.CurrentUserIdExtractor;
 import com.openclassrooms.mdd_api.common.web.response.IdResponse;
 import com.openclassrooms.mdd_api.subscription.dto.SubscribeRequest;
 import com.openclassrooms.mdd_api.subscription.service.SubscriptionService;
@@ -25,6 +25,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final CurrentUserIdExtractor currentUserIdExtractor;
 
     @PostMapping
     @Operation(summary = "Subscribe to a topic")
@@ -40,7 +41,7 @@ public class SubscriptionController {
             @RequestHeader(name = "X-XSRF-TOKEN", required = false) String xsrfToken,
             @Valid @RequestBody SubscribeRequest req
     ) {
-        Long userId = parseUserId(jwt);
+        Long userId = currentUserIdExtractor.requireUserId(jwt);
         Long topicId = subscriptionService.subscribe(userId, req.topicId());
         return ResponseEntity.status(CREATED).body(new IdResponse(topicId));
     }
@@ -56,19 +57,8 @@ public class SubscriptionController {
             @RequestHeader(name = "X-XSRF-TOKEN", required = false) String xsrfToken,
             @PathVariable Long topicId
     ) {
-        Long userId = parseUserId(jwt);
+        Long userId = currentUserIdExtractor.requireUserId(jwt);
         subscriptionService.unsubscribe(userId, topicId);
         return ResponseEntity.noContent().build();
-    }
-
-    private Long parseUserId(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
-        try {
-            return Long.valueOf(jwt.getSubject());
-        } catch (NumberFormatException e) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
     }
 }
