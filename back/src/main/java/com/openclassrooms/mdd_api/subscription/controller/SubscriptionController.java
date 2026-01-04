@@ -1,7 +1,7 @@
 package com.openclassrooms.mdd_api.subscription.controller;
 
 import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
-import com.openclassrooms.mdd_api.subscription.dto.IdResponse;
+import com.openclassrooms.mdd_api.common.web.response.IdResponse;
 import com.openclassrooms.mdd_api.subscription.dto.SubscribeRequest;
 import com.openclassrooms.mdd_api.subscription.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
