@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 public class ApiConflictException extends RuntimeException {
 
-    private final List<FieldErrorItem> fieldErrors;
+    private final transient List<FieldErrorItem> fieldErrors;
 
     public ApiConflictException(String message) {
         this(message, List.of());
