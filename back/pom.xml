@@ -197,9 +197,11 @@
                                 <exclude>com/openclassrooms/mdd_api/subscription/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/subscription/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/post/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/post/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/post/bootstrap/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/feed/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/comment/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/comment/dto/**</exclude>
 
                             </excludes>
                         </configuration>
@@ -223,9 +225,11 @@
                                 <exclude>com/openclassrooms/mdd_api/subscription/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/subscription/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/post/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/post/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/post/bootstrap/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/feed/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/comment/entity/**</exclude>
+                                <exclude>com/openclassrooms/mdd_api/comment/dto/**</exclude>
                             </excludes>
 
                             <rules>

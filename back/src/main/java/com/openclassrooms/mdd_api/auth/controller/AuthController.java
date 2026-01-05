@@ -1,6 +1,6 @@
 package com.openclassrooms.mdd_api.auth.controller;
 
-import com.openclassrooms.mdd_api.auth.dto.IdResponse;
+import com.openclassrooms.mdd_api.common.web.response.IdResponse;
 import com.openclassrooms.mdd_api.auth.dto.LoginRequest;
 import com.openclassrooms.mdd_api.auth.dto.RegisterRequest;
 import com.openclassrooms.mdd_api.auth.dto.TokenResponse;

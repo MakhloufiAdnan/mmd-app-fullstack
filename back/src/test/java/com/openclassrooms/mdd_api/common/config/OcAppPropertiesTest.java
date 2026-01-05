@@ -7,9 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link OcAppProperties}.
- * Note:
- * - This class is @Data (Lombok), and JaCoCo can count equals/canEqual/toString branches.
- * - Tests are minimal but ensure contracts and avoid Sonar warnings.
  */
 class OcAppPropertiesTest {
 
@@ -22,13 +19,13 @@ class OcAppPropertiesTest {
         OcAppProperties different = props("other", 1000L, 2000L, true);
 
         // Act + Assert (avoid 'isEqualTo called on itself' and 'incompatible types' warnings)
-        assertThat(a.equals(a)).isTrue();
-        assertThat(a.equals(null)).isFalse();
-        assertThat(a.equals("nope")).isFalse();
-
-        assertThat(a).isEqualTo(b);
-        assertThat(a).hasSameHashCodeAs(b);
-        assertThat(a).isNotEqualTo(different);
+        assertThat(a)
+                .isEqualTo(a)                 // self
+                .isNotEqualTo(null)     // null
+                .isNotEqualTo("nope")   // different type
+                .isEqualTo(b)
+                .hasSameHashCodeAs(b)
+                .isNotEqualTo(different);
     }
 
     @Test

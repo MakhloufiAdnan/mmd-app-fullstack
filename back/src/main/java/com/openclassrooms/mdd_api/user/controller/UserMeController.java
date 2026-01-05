@@ -1,6 +1,6 @@
 package com.openclassrooms.mdd_api.user.controller;
 
-import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.common.security.CurrentUserIdExtractor;
 import com.openclassrooms.mdd_api.user.dto.UpdateMeRequest;
 import com.openclassrooms.mdd_api.user.dto.UpdatedResponse;
 import com.openclassrooms.mdd_api.user.dto.UserMeResponse;
@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserMeController {
 
     private final UserService userService;
+    private final CurrentUserIdExtractor currentUserIdExtractor;
 
     @Operation(summary = "Get current user profile (me)")
     @SecurityRequirement(name = "bearerAuth")
@@ -33,7 +34,7 @@ public class UserMeController {
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     @GetMapping("/me")
     public ResponseEntity<UserMeResponse> me(@AuthenticationPrincipal Jwt jwt) {
-        Long userId = parseUserId(jwt);
+        Long userId = currentUserIdExtractor.requireUserId(jwt);
         return ResponseEntity.ok(userService.getMe(userId));
     }
 
@@ -49,19 +50,8 @@ public class UserMeController {
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody UpdateMeRequest request
     ) {
-        Long userId = parseUserId(jwt);
+        Long userId = currentUserIdExtractor.requireUserId(jwt);
         boolean updated = userService.updateMe(userId, request);
         return ResponseEntity.ok(new UpdatedResponse(updated));
-    }
-
-    private Long parseUserId(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
-        try {
-            return Long.valueOf(jwt.getSubject());
-        } catch (NumberFormatException e) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
@@ -16,4 +17,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     @EntityGraph(attributePaths = {"topic", "author"})
     List<Post> findByTopic_IdIn(Collection<Long> topicIds, Sort sort);
+
+    /**
+     * Detail: charge topic + author pour construire PostDetailResponse.
+     */
+    @EntityGraph(attributePaths = {"topic", "author"})
+    Optional<Post> findDetailById(Long id);
 }

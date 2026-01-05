@@ -17,6 +17,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 
@@ -105,6 +106,18 @@ public class RestExceptionHandler {
                 ApiErrorCodes.UNAUTHORIZED,
                 ex.getMessage(),
                 ex.getFieldErrors()
+        );
+    }
+
+    // 403 - Forbidden (security / business rule)
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return createErrorResponse(
+                HttpStatus.FORBIDDEN,
+                ApiErrorCodes.FORBIDDEN,
+                "Forbidden",
+                List.of()
         );
     }
 

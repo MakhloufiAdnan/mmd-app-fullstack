@@ -1,6 +1,6 @@
 package com.openclassrooms.mdd_api.topic.controller;
 
-import com.openclassrooms.mdd_api.common.web.exception.ApiUnauthorizedException;
+import com.openclassrooms.mdd_api.common.security.CurrentUserIdExtractor;
 import com.openclassrooms.mdd_api.topic.dto.TopicListItemDto;
 import com.openclassrooms.mdd_api.topic.service.TopicService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +22,7 @@ import java.util.List;
 public class TopicController {
 
     private final TopicService topicService;
+    private final CurrentUserIdExtractor currentUserIdExtractor;
 
     @GetMapping
     @Operation(summary = "List all topics with subscribed status")
@@ -31,18 +32,7 @@ public class TopicController {
     public List<TopicListItemDto> listTopics(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = parseUserId(jwt);
+        Long userId = currentUserIdExtractor.requireUserId(jwt);
         return topicService.listTopics(userId);
-    }
-
-    private Long parseUserId(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
-        try {
-            return Long.valueOf(jwt.getSubject());
-        } catch (NumberFormatException e) {
-            throw new ApiUnauthorizedException("Unauthorized");
-        }
     }
 }
