@@ -43,3 +43,20 @@ JWT_EXPIRATION_MS=900000
 REFRESH_TOKEN_EXPIRATION_MS=1209600000
 TOKEN_SECRET=dev-secret-change-me
 ```
+
+## Comment l’utiliser (ordre recommandé)
+
+Importer l’environnement puis sélectionner “Mdd local”
+
+Importer la collection
+
+### Lancer :
+
+- Auth → GET /api/auth/csrf (capture XSRF-TOKEN → variable xsrfToken)
+- Auth → POST /api/auth/register (optionnel si user existe déjà)
+- Auth → POST /api/auth/login (stocke accessToken automatiquement)
+- Topics → GET /api/topics (récupère un topicId automatiquement si possible)
+- Subscriptions → POST subscribe (si tu appliques la règle “write requires subscription”)
+- Posts → POST /api/posts (stocke postId)
+- Posts → GET /api/posts/{{postId}}
+- Posts/Comments → POST comment (stocke commentId)
