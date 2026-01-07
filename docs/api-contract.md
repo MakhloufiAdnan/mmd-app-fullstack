@@ -243,8 +243,16 @@ Response 200:
 
 ```json
 [
-  { "id": 1, "name": "Java", "subscribed": true },
-  { "id": 2, "name": "Angular", "subscribed": false }
+  { "id": 1, 
+  "name": "Java", 
+  "description": "Java est un langage de programmation",
+  "subscribed": true 
+  },
+  { "id": 2, 
+  "name": "Angular", 
+  "description": "Angular est un langage frontend",
+  "subscribed": false 
+  }
 ]
 ```
 
@@ -295,6 +303,7 @@ Response 200:
     "id": 100,
     "topic": { "id": 10, "name": "Java" },
     "title": "Titre",
+    "content": "Contenu complet…",
     "author": { "id": 1, "username": "devUser" },
     "createdAt": "2025-12-22T12:00:00Z",
     "commentsCount": 2
