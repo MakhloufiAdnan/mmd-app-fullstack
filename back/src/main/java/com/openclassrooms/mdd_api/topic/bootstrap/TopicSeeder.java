@@ -24,9 +24,30 @@ public class TopicSeeder implements ApplicationRunner {
         }
 
         topicRepository.saveAll(List.of(
-                new Topic("Découvrir le monde formidable de Java"),
-                new Topic("Comment maitriser Java"),
-                new Topic("Java, par ou commencer")
+                new Topic(
+                        "Angular",
+                        "Framework front moderne pour construire des interfaces réactives." +
+                                "Idéal pour structurer une SPA avec composants, routing et services." +
+                                "Parfait pour un MVP solide et maintenable."
+                ),
+                new Topic(
+                        "Spring Boot",
+                        "Framework back Java pour créer des APIs REST rapidement. " +
+                                "Sécurité, validation, JPA et configuration simplifiées. " +
+                                "Un standard pour des services robustes."
+                ),
+                new Topic(
+                        "Clean Code",
+                        "Écrire du code lisible, testable et facile à faire évoluer." +
+                                "Nommage, petites fonctions, responsabilité unique." +
+                                "Moins de bugs, plus de sérénité en équipe."
+                ),
+                new Topic(
+                        "DevOps",
+                        "Automatiser la livraison : build, tests, déploiement, monitoring." +
+                                "CI/CD, conteneurs, logs et observabilité." +
+                                "Gagner en vitesse sans sacrifier la qualité."
+                )
         ));
     }
 }

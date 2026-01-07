@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mdd_api.common.config.OcAppProperties;
 import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
 import com.openclassrooms.mdd_api.common.web.response.ApiErrorResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,7 +21,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 

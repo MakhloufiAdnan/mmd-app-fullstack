@@ -23,7 +23,12 @@ public class Topic {
     @Column(nullable = false, length = 100)
     private String name;
 
-    public Topic(String name) {
+    @Column(nullable = false, length = 500)
+    private String description;
+
+    public Topic(String name,  String description) {
+
         this.name = name;
+        this.description = description;
     }
 }

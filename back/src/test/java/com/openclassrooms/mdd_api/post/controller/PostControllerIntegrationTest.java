@@ -149,7 +149,8 @@ class PostControllerIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     private Topic seedTopic(String name) {
-        return topicRepository.save(new Topic(name));
+        String desc = "Description " + name + "\nLigne 2\nLigne 3";
+        return topicRepository.save(new Topic(name, desc));
     }
 
     private void seedSubscription(User user, Topic topic) {
