@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 
 import { UserMeApiService } from './user-me-api.service';
+import { HTTP_TEST_PROVIDERS } from '@core/testing/test.providers';
 
 describe('UserMeApiService', () => {
   let api: UserMeApiService;
@@ -10,18 +10,19 @@ describe('UserMeApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [...HTTP_TEST_PROVIDERS],
     });
 
     api = TestBed.inject(UserMeApiService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => httpMock.verify());
+  afterEach(() => {
+    httpMock.verify();
+  });
 
   it('should call GET /api/users/me with credentials', () => {
-    const me$ = api.me();
-    me$.subscribe();
+    api.me().subscribe();
 
     const req = httpMock.expectOne('/api/users/me');
     expect(req.request.method).toBe('GET');

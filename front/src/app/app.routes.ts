@@ -40,11 +40,25 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/profile/pages/profile/profile').then((m) => m.Profile),
       },
-
       {
         path: 'topics',
         loadComponent: () =>
           import('./features/topics/pages/topics/topics').then((m) => m.TopicsComponent),
+      },
+
+      {
+        path: 'posts/new',
+        loadComponent: () =>
+          import('./features/posts/pages/post-create/post-create.component').then(
+            (m) => m.PostCreateComponent
+          ),
+      },
+      {
+        path: 'posts/:postId',
+        loadComponent: () =>
+          import('./features/posts/pages/post-detail/post-detail.component').then(
+            (m) => m.PostDetailComponent
+          ),
       },
     ],
   },

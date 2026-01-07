@@ -1,0 +1,86 @@
+<section class="container">
+  <header class="header">
+    <a class="back" routerLink="/feed">← Retour</a>
+    <h1>Créer un article</h1>
+  </header>
+
+  @if (globalError(); as ge) {
+    <p class="global-error">{{ ge }}</p>
+  }
+
+  @if (loading$ | async) {
+    <div class="loading">
+      <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+    </div>
+  } @else {
+    @if (error$ | async; as errMsg) {
+      @if (errMsg) {
+        <p class="global-error">{{ errMsg }}</p>
+      }
+    }
+
+    @if (topics$ | async; as topics) {
+      @if (!hasAnySubscribedTopics(topics)) {
+        <p class="hint">
+          Tu dois être abonné à au moins un thème pour publier un article.
+        </p>
+      }
+
+      <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Thème</mat-label>
+
+          <mat-select formControlName="topicId">
+            @for (t of topics; track t.id) {
+              <mat-option [value]="t.id" [disabled]="!t.subscribed">
+                {{ t.name }}
+              </mat-option>
+            }
+          </mat-select>
+
+          <!-- Erreur serveur prioritaire -->
+          @if (getFieldErrorFirst('topicId'); as fe) {
+            <mat-error>{{ fe }}</mat-error>
+          } @else if (form.get('topicId')?.hasError('required') && form.get('topicId')?.touched) {
+            <mat-error>Le thème est requis.</mat-error>
+          }
+
+          <div class="hint-inline">
+            Vous devez être abonné à un thème pour publier.
+          </div>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Titre</mat-label>
+          <input matInput formControlName="title" />
+
+          @if (getFieldErrorFirst('title'); as fe) {
+            <mat-error>{{ fe }}</mat-error>
+          } @else if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
+            <mat-error>Le titre est requis.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contenu</mat-label>
+          <textarea matInput rows="8" formControlName="content"></textarea>
+
+          @if (getFieldErrorFirst('content'); as fe) {
+            <mat-error>{{ fe }}</mat-error>
+          } @else if (form.get('content')?.hasError('required') && form.get('content')?.touched) {
+            <mat-error>Le contenu est requis.</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit"
+          [disabled]="form.invalid || submitting()"
+        >
+          Publier
+        </button>
+      </form>
+    }
+  }
+</section>

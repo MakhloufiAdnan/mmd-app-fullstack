@@ -2,7 +2,13 @@
   @if (vm$ | async; as vm) {
   <div class="feed-toolbar">
     <!-- bouton création : visible mais pas cliquable -->
-    <button class="mdd-btn" mat-flat-button color="primary" type="button" disabled>
+    <button
+      class="mdd-btn"
+      mat-flat-button
+      color="primary"
+      type="button"
+      [routerLink]="['/posts/new']"
+    >
       Créer un article
     </button>
 
@@ -44,7 +50,14 @@
   } @else {
   <div class="feed-grid">
     @for (post of vm.feed; track post.id) {
-    <mat-card class="feed-card">
+    <mat-card
+      class="feed-card"
+      role="button"
+      tabindex="0"
+      [routerLink]="['/posts', post.id]"
+      (keydown.enter)="$event.preventDefault()"
+      (keydown.space)="$event.preventDefault()"
+    >
       <h2 class="feed-title">{{ post.title }}</h2>
 
       <div class="feed-meta">

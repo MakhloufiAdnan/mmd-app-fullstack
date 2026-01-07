@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthStore } from '../state/auth.store';
+import { ROUTER_TEST_PROVIDERS } from '@core/testing/test.providers';
 
 describe('Auth Interceptor', () => {
   let http: HttpClient;
@@ -14,7 +14,9 @@ describe('Auth Interceptor', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([]),
+        // Some interceptor code may use Router for redirects; keep it available in tests.
+        ...ROUTER_TEST_PROVIDERS,
+        // HttpClient configured with the interceptor under test.
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
       ],
@@ -24,7 +26,7 @@ describe('Auth Interceptor', () => {
     httpMock = TestBed.inject(HttpTestingController);
     store = TestBed.inject(AuthStore);
 
-    // Assure un état stable en tests
+    // Guards/interceptors in the app assume auth store has been initialized.
     store.markInitialized();
   });
 
@@ -36,8 +38,8 @@ describe('Auth Interceptor', () => {
     store.setAccessToken('token123');
 
     http.get('/api/feed').subscribe();
-
     const req = httpMock.expectOne('/api/feed');
+
     expect(req.request.headers.get('Authorization')).toBe('Bearer token123');
     req.flush([]);
   });
@@ -45,21 +47,19 @@ describe('Auth Interceptor', () => {
   it('on 401: refresh once then retry request', () => {
     store.setAccessToken('expired');
 
-    http.get('/api/feed').subscribe({
-      next: () => {},
-    });
+    http.get('/api/feed').subscribe({ next: () => {} });
 
-    // 1ère tentative => 401
+    // First call -> 401
     const first = httpMock.expectOne('/api/feed');
     first.flush({}, { status: 401, statusText: 'Unauthorized' });
 
-    // Refresh
+    // Refresh should be triggered once.
     const refresh = httpMock.expectOne('/api/auth/refresh');
     expect(refresh.request.method).toBe('POST');
     expect(refresh.request.withCredentials).toBeTrue();
     refresh.flush({ accessToken: 'newToken', tokenType: 'Bearer', expiresInSeconds: 900 });
 
-    // Retry => OK avec nouveau Bearer
+    // Original request should be retried with the new token.
     const retry = httpMock.expectOne('/api/feed');
     expect(retry.request.headers.get('Authorization')).toBe('Bearer newToken');
     retry.flush([]);
