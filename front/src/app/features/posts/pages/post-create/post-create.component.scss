@@ -1,0 +1,54 @@
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
+
+.back {
+  text-decoration: none;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.submit {
+  justify-self: end;
+}
+
+.global-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.hint {
+  margin: 12px 0;
+  opacity: 0.85;
+}
+
+.hint-inline {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.75;
+}

@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-
 import { Register } from './register';
+import { DEFAULT_COMPONENT_TEST_PROVIDERS } from '@core/testing/test.providers';
 
 describe('Register', () => {
   let component: Register;
@@ -12,7 +9,8 @@ describe('Register', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Register],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      // Register depends on Router + AuthFacade (HttpClient) + Material.
+      providers: [...DEFAULT_COMPONENT_TEST_PROVIDERS],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Register);

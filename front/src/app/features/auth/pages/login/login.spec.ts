@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-
 import { Login } from './login';
+import { DEFAULT_COMPONENT_TEST_PROVIDERS } from '@core/testing/test.providers';
 
 describe('Login', () => {
   let component: Login;
@@ -12,7 +9,8 @@ describe('Login', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      // Login depends on Router + AuthFacade (which uses HttpClient) + Material.
+      providers: [...DEFAULT_COMPONENT_TEST_PROVIDERS],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Login);

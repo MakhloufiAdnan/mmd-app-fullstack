@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+
 import { TopicsComponent } from './topics';
 import { TopicsApiService } from '../../services/topics-api.service';
 
@@ -11,6 +12,7 @@ describe('TopicsComponent', () => {
         {
           provide: TopicsApiService,
           useValue: {
+            // Minimal stub for a "smoke test": Topics component expects an Observable.
             listTopics: () => of([{ id: 1, name: 'Java', subscribed: true }]),
             subscribeToTopic: () => of({ id: 1 }),
           },

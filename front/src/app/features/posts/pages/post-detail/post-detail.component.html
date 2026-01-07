@@ -1,0 +1,75 @@
+<section class="container">
+  <header class="header">
+    <a class="back" routerLink="/feed">← Retour</a>
+    <h1>Détail</h1>
+  </header>
+
+  @if (globalError(); as ge) {
+  <p class="global-error">{{ ge }}</p>
+  } @if (vm$ | async; as vm) { @if (vm.loading) {
+  <div class="loading">
+    <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+  </div>
+  } @else if (vm.error) {
+  <p class="global-error">{{ vm.error }}</p>
+  } @else if (vm.post; as post) {
+  <mat-card class="card">
+    <div class="topic">{{ post.topic.name }}</div>
+    <h2 class="title">{{ post.title }}</h2>
+
+    <div class="meta">
+      <span class="meta-item">Auteur : {{ post.author.username }}</span>
+      <span class="meta-item">Date : {{ post.createdAt | date : 'shortDate' }}</span>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <p class="content">{{ post.content }}</p>
+  </mat-card>
+
+  <section class="comments">
+    <h3>Commentaires ({{ post.comments.length }})</h3>
+
+    @if (post.comments.length === 0) {
+    <p class="empty">Aucun commentaire pour le moment.</p>
+    } @else {
+    <div class="comment-list">
+      @for (c of post.comments; track c.id) {
+      <mat-card class="comment-card">
+        <div class="comment-meta">
+          <span class="author">{{ c.author.username }}</span>
+          <span class="date">{{ c.createdAt | date : 'shortDate' }}</span>
+        </div>
+        <div class="comment-content">{{ c.content }}</div>
+      </mat-card>
+      }
+    </div>
+    }
+
+    <!-- Form en bas, comme tu veux -->
+    <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="onSubmitComment(post.id)">
+      <mat-form-field appearance="outline" class="comment-field">
+        <mat-label>Ajouter un commentaire</mat-label>
+        <textarea matInput rows="3" formControlName="content"></textarea>
+
+        @if (getFieldErrorFirst('content'); as fe) {
+        <mat-error>{{ fe }}</mat-error>
+        } @else if (commentForm.get('content')?.hasError('required') &&
+        commentForm.get('content')?.touched) {
+        <mat-error>Le contenu est requis.</mat-error>
+        }
+      </mat-form-field>
+
+      <button
+        mat-icon-button
+        type="submit"
+        class="send-btn"
+        [disabled]="commentForm.invalid || submitting()"
+        aria-label="Envoyer le commentaire"
+      >
+        <img src="assets/logo-envoyer.png" alt="" />
+      </button>
+    </form>
+  </section>
+  } }
+</section>

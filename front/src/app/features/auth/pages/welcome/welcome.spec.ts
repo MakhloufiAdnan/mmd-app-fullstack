@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { Welcome } from './welcome';
+import { ROUTER_TEST_PROVIDERS } from '@core/testing/test.providers';
 
 describe('Welcome', () => {
   let component: Welcome;
@@ -8,9 +8,10 @@ describe('Welcome', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Welcome]
-    })
-    .compileComponents();
+      imports: [Welcome],
+      // Welcome injects Router to navigate on button clicks.
+      providers: [...ROUTER_TEST_PROVIDERS],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(Welcome);
     component = fixture.componentInstance;

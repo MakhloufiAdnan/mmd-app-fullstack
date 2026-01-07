@@ -1,6 +1,6 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   distinctUntilChanged,
@@ -44,6 +44,7 @@ type FeedVm = {
     MatButtonToggleModule,
     MatMenuModule,
     MatIconModule,
+    RouterLink,
   ],
   templateUrl: './feed.html',
   styleUrl: './feed.scss',

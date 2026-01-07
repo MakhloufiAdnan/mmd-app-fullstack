@@ -1,12 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { ROUTER_TEST_PROVIDERS } from './core/testing/test.providers';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      // App template contains <router-outlet>, so Router must be provided.
+      providers: [...ROUTER_TEST_PROVIDERS],
     }).compileComponents();
   });
 
