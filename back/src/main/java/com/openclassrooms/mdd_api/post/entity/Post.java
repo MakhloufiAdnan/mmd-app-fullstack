@@ -23,7 +23,7 @@ public class Post {
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String content;
 
     // Généré côté back

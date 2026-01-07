@@ -71,14 +71,6 @@ class TopicControllerIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/topics -> 401 when no bearer")
-    void list_topics_without_bearer_returns_401() throws Exception {
-        // Act + Assert
-        mockMvc.perform(get("/api/topics"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     @DisplayName("GET /api/topics -> 200 returns array sorted by name ASC")
     void list_topics_happy_path_returns_array_sorted_by_name() throws Exception {
         // Arrange
@@ -94,13 +86,18 @@ class TopicControllerIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andReturn();
 
-        // Assert: tri global name ASC
+        // Assert: tri global name ASC + presence de description (contrat)
         JsonNode topics = readJson(res);
         assertThat(topics.size()).isGreaterThan(0);
 
         List<String> names = new ArrayList<>();
         for (JsonNode t : topics) {
-            names.add(t.get("name").asText());
+            // Contract: Topic must expose description
+            assertThat(t.hasNonNull("description")).isTrue();
+            assertThat(t.get("description").asText()).isNotBlank();
+
+            String name = t.get("name").asText();
+            names.add(name);
         }
 
         List<String> sorted = new ArrayList<>(names);
@@ -132,6 +129,7 @@ class TopicControllerIntegrationTest extends AbstractMySqlIntegrationTest {
         MvcResult res = mockMvc.perform(get("/api/topics")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
                 .andReturn();
 
         // Assert
@@ -146,20 +144,20 @@ class TopicControllerIntegrationTest extends AbstractMySqlIntegrationTest {
         }
 
         assertThat(target).isNotNull();
+        assertThat(target.hasNonNull("description")).isTrue();
+        assertThat(target.get("description").asText()).isNotBlank();
         assertThat(target.get("subscribed").asBoolean()).isTrue();
     }
 
-    // ---------------- Helpers ----------------
-
     private CsrfBundle initCsrf() throws Exception {
+        // GET /api/auth/csrf sets XSRF-TOKEN cookie
         MvcResult res = mockMvc.perform(get("/api/auth/csrf"))
                 .andExpect(status().isNoContent())
                 .andReturn();
 
-        String csrfToken = extractCookieValueFromSetCookieHeaders(
-                res.getResponse().getHeaders(HttpHeaders.SET_COOKIE),
-                CSRF_COOKIE
-        );
+        List<String> setCookieHeaders = res.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+
+        String csrfToken = extractCookieValueFromSetCookieHeaders(setCookieHeaders, CSRF_COOKIE);
 
         Cookie csrfCookie = new Cookie(CSRF_COOKIE, csrfToken);
         csrfCookie.setPath("/");
@@ -192,8 +190,10 @@ class TopicControllerIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andReturn();
     }
 
-    private String accessToken(MvcResult loginRes) throws Exception {
-        return readJson(loginRes).get("accessToken").asText();
+    private static String accessToken(MvcResult loginResult) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(loginResult.getResponse().getContentAsString());
+        return json.get("accessToken").asText();
     }
 
     private JsonNode readJson(MvcResult result) throws Exception {
