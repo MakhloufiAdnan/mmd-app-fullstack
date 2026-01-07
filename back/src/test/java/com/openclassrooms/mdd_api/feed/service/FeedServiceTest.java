@@ -134,6 +134,7 @@ class FeedServiceTest {
 
         when(p1.getId()).thenReturn(1L);
         when(p1.getTitle()).thenReturn("T1");
+        when(p1.getContent()).thenReturn("C1");
         when(p1.getCreatedAt()).thenReturn(i1);
         when(p1.getTopic()).thenReturn(topic);
         when(topic.getId()).thenReturn(10L);
@@ -148,6 +149,7 @@ class FeedServiceTest {
 
         when(p2.getId()).thenReturn(2L);
         when(p2.getTitle()).thenReturn("T2");
+        when(p2.getContent()).thenReturn("C2");
         when(p2.getCreatedAt()).thenReturn(i2);
         when(p2.getTopic()).thenReturn(topic);
         when(p2.getAuthor()).thenReturn(author2);
@@ -172,6 +174,7 @@ class FeedServiceTest {
                         1L,
                         new FeedTopicDto(10L, "Java"),
                         "T1",
+                        "C1",
                         new FeedAuthorDto(7L, "alice"),
                         i1,
                         5L
@@ -180,6 +183,7 @@ class FeedServiceTest {
                         2L,
                         new FeedTopicDto(10L, "Java"),
                         "T2",
+                        "C2",
                         new FeedAuthorDto(8L, "bob"),
                         i2,
                         0L // absent du Map => 0 par défaut
@@ -208,6 +212,7 @@ class FeedServiceTest {
 
         when(p1.getId()).thenReturn(1L);
         when(p1.getTitle()).thenReturn("T1");
+        when(p1.getContent()).thenReturn("C1");
         when(p1.getCreatedAt()).thenReturn(i1);
         when(p1.getTopic()).thenReturn(topic);
         when(topic.getId()).thenReturn(10L);
@@ -228,6 +233,7 @@ class FeedServiceTest {
                         1L,
                         new FeedTopicDto(10L, "Java"),
                         "T1",
+                        "C1",
                         new FeedAuthorDto(7L, "alice"),
                         i1,
                         0L
@@ -250,8 +256,9 @@ class FeedServiceTest {
         verify(postRepository).findByTopic_IdIn(eq(List.of(10L)), captor.capture());
 
         Sort sort = captor.getValue();
-        assertThat(sort.getOrderFor("createdAt")).isNotNull();
-        assertThat(sort.getOrderFor("createdAt").getDirection()).isEqualTo(Sort.Direction.ASC);
+        Sort.Order createdAtOrder = sort.getOrderFor("createdAt");
+        assertThat(createdAtOrder).isNotNull();
+        assertThat(createdAtOrder.getDirection()).isEqualTo(Sort.Direction.ASC);
     }
 
     @ParameterizedTest(name = "order={0} -> Sort DESC (default)")
@@ -270,7 +277,8 @@ class FeedServiceTest {
         verify(postRepository).findByTopic_IdIn(eq(List.of(10L)), captor.capture());
 
         Sort sort = captor.getValue();
-        assertThat(sort.getOrderFor("createdAt")).isNotNull();
-        assertThat(sort.getOrderFor("createdAt").getDirection()).isEqualTo(Sort.Direction.DESC);
+        Sort.Order createdAtOrder = sort.getOrderFor("createdAt");
+        assertThat(createdAtOrder).isNotNull();
+        assertThat(createdAtOrder.getDirection()).isEqualTo(Sort.Direction.DESC);
     }
 }

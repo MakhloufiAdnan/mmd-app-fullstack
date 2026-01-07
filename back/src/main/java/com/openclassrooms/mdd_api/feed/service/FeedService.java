@@ -69,9 +69,10 @@ public class FeedService {
                         p.getId(),
                         new FeedTopicDto(p.getTopic().getId(), p.getTopic().getName()),
                         p.getTitle(),
+                        p.getContent(),
                         new FeedAuthorDto(p.getAuthor().getId(), p.getAuthor().getUsername()),
                         p.getCreatedAt(),
-                        countsByPostId.getOrDefault(p.getId(), 0L) // default 0 si absent
+                        countsByPostId.getOrDefault(p.getId(), 0L)
                 ))
                 .toList();
     }

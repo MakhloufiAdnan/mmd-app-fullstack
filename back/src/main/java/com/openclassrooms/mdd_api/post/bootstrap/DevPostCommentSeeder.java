@@ -42,47 +42,49 @@ public class DevPostCommentSeeder implements ApplicationRunner {
             return;
         }
 
-        // 3) Créer 2 users "dev" si besoin (auteurs/comm)
-        User devUser = getOrCreateUser("user@mail.com", "devUser", "P@ssw0rd!");
-        User otherUser = getOrCreateUser("other@mail.com", "otherUser", "P@ssw0rd!");
+        // 3) Utilisateurs (3 auteurs)
+        String rawPassword = "Aa1!aaaa";
+        User bob = getOrCreateUser("bob_marley@example.com", "bob_marley", rawPassword);
+        User tom = getOrCreateUser("tom_soyer@example.com", "tom_soyer", rawPassword);
+        User ben = getOrCreateUser("ben_jerry@example.com", "ben_jerry", rawPassword);
 
-        // 4) Prendre jusqu’à 3 topics (sans supposer les IDs)
-        Topic t1 = topics.get(0);
-        Topic t2 = topics.size() > 1 ? topics.get(1) : t1;
-        Topic t3 = topics.size() > 2 ? topics.get(2) : t1;
+        List<User> authors = List.of(bob, tom, ben);
 
-        String seeds = "[Seed] ";
+        // 4) 4 posts par topic
+        String seedPrefix = "[Seed] ";
 
-        // 5) Créer quelques posts (titres uniques)
-        Post p1 = postRepository.save(new Post(
-                seeds + t1.getName() + " — Les fondamentaux",
-                "Contenu de démonstration : bases, objectifs, premières étapes.",
-                t1,
-                devUser
-        ));
+        for (Topic topic : topics) {
+            for (int i = 1; i <= 4; i++) {
+                User author = authors.get((i - 1) % authors.size());
 
-        Post p2 = postRepository.save(new Post(
-                seeds + t2.getName() + " — Astuces pratiques",
-                "Contenu de démonstration : astuces, erreurs fréquentes, bonnes pratiques.",
-                t2,
-                devUser
-        ));
+                Post post = postRepository.save(new Post(
+                        seedPrefix + topic.getName() + " — Article " + i,
+                        buildSeedContent(topic.getName(), i),
+                        topic,
+                        author
+                ));
 
-        Post p3 = postRepository.save(new Post(
-                seeds + t3.getName() + " — Aller plus loin",
-                "Contenu de démonstration : pistes avancées, ressources, exercices.",
-                t3,
-                otherUser
-        ));
+                // 5) 1 commentaire uniquement sur l'article 1 de chaque topic
+                if (i == 1) {
+                    User commenter = (author.getId().equals(bob.getId())) ? tom : bob;
+                    commentRepository.save(new Comment(
+                            "Merci pour ce partage ! J'aime bien l'angle \"MVP\".",
+                            post,
+                            commenter
+                    ));
+                }
+            }
+        }
+    }
 
-        // 6) Ajouter quelques comments (non récursifs)
-        commentRepository.save(new Comment("Super clair, merci !", p1, otherUser));
-        commentRepository.save(new Comment("Je confirme, bon résumé 👌", p1, devUser));
-
-        commentRepository.save(new Comment("Intéressant, tu as une ressource à conseiller ?", p2, otherUser));
-
-        commentRepository.save(new Comment("Top, je vais tester ça.", p3, devUser));
-        commentRepository.save(new Comment("Ça m’a débloqué, merci.", p3, otherUser));
+    private String buildSeedContent(String topicName, int articleIndex) {
+        // Multiligne pour tester le line-clamp (feed = 5 lignes) + rendu detail.
+        return "Article de démonstration sur " + topicName + " (n°" + articleIndex + ").\n"
+                + "On aborde une idée clé, avec un exemple simple et concret.\n"
+                + "Ensuite on détaille un piège fréquent et comment l'éviter.\n"
+                + "On ajoute une bonne pratique applicable dès aujourd'hui.\n"
+                + "Enfin, on propose une petite checklist de vérification.\n"
+                + "Conclusion : garde ça simple, puis itère.";
     }
 
     private User getOrCreateUser(String email, String username, String rawPassword) {

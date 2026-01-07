@@ -12,7 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HexFormat;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link JwtConfig}.

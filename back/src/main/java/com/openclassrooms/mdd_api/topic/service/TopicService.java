@@ -28,7 +28,7 @@ public class TopicService {
         Set<Long> subscribedIds = new HashSet<>(subscriptionRepository.findTopicIdsByUserId(userId));
 
         return topics.stream()
-                .map(t -> new TopicListItemDto(t.getId(), t.getName(), subscribedIds.contains(t.getId())))
+                .map(t -> new TopicListItemDto(t.getId(), t.getName(), t.getDescription(), subscribedIds.contains(t.getId())))
                 .toList();
     }
 }
