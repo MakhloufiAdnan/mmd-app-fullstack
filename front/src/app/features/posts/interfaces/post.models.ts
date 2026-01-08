@@ -1,7 +1,3 @@
-/**
- * Posts feature 
- */
-
 export interface CreatedIdResponse {
   id: number;
 }
