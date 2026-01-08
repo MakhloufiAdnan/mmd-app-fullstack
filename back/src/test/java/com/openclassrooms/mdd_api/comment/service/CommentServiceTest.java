@@ -27,16 +27,6 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link CommentService}.
- *
- * Pattern AAA:
- *  - Arrange: préparer les mocks + données
- *  - Act: appeler la méthode testée
- *  - Assert: vérifier résultat + interactions
- *
- * Sonar rule:
- *  - Dans assertThatThrownBy(() -> ...), la lambda doit contenir UNE SEULE invocation
- *    susceptible de lever une exception.
- *  => On construit les DTO (CreateCommentRequest) en dehors de la lambda.
  */
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
@@ -54,7 +44,7 @@ class CommentServiceTest {
         long userId = 1L;
         long postId = 10L;
 
-        CreateCommentRequest req = new CreateCommentRequest("hi"); // DTO construit hors lambda (Sonar)
+        CreateCommentRequest req = new CreateCommentRequest("hi"); 
         when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
         // Act + Assert (lambda = une seule invocation)
@@ -73,7 +63,7 @@ class CommentServiceTest {
         long postId = 10L;
         long topicId = 99L;
 
-        CreateCommentRequest req = new CreateCommentRequest("hi"); // DTO hors lambda (Sonar)
+        CreateCommentRequest req = new CreateCommentRequest("hi");
 
         Topic topic = mock(Topic.class);
         when(topic.getId()).thenReturn(topicId);
@@ -101,7 +91,7 @@ class CommentServiceTest {
         long postId = 10L;
         long topicId = 99L;
 
-        CreateCommentRequest req = new CreateCommentRequest("hi"); // DTO hors lambda (Sonar)
+        CreateCommentRequest req = new CreateCommentRequest("hi"); 
 
         Topic topic = mock(Topic.class);
         when(topic.getId()).thenReturn(topicId);
@@ -133,7 +123,7 @@ class CommentServiceTest {
         long postId = 10L;
         long topicId = 99L;
 
-        CreateCommentRequest req = new CreateCommentRequest("Hello"); // DTO hors lambda
+        CreateCommentRequest req = new CreateCommentRequest("Hello"); 
 
         Topic topic = mock(Topic.class);
         when(topic.getId()).thenReturn(topicId);

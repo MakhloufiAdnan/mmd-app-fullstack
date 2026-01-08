@@ -42,7 +42,7 @@ public class DevPostCommentSeeder implements ApplicationRunner {
             return;
         }
 
-        // 3) Utilisateurs (3 auteurs)
+        // 3) Utilisateurs
         String rawPassword = "Aa1!aaaa";
         User bob = getOrCreateUser("bob_marley@example.com", "bob_marley", rawPassword);
         User tom = getOrCreateUser("tom_soyer@example.com", "tom_soyer", rawPassword);
@@ -78,7 +78,6 @@ public class DevPostCommentSeeder implements ApplicationRunner {
     }
 
     private String buildSeedContent(String topicName, int articleIndex) {
-        // Multiligne pour tester le line-clamp (feed = 5 lignes) + rendu detail.
         return "Article de démonstration sur " + topicName + " (n°" + articleIndex + ").\n"
                 + "On aborde une idée clé, avec un exemple simple et concret.\n"
                 + "Ensuite on détaille un piège fréquent et comment l'éviter.\n"

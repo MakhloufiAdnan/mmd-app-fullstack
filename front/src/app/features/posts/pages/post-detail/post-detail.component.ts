@@ -1,9 +1,9 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, of, Subject } from 'rxjs';
 import {
   catchError,
@@ -15,8 +15,6 @@ import {
 } from 'rxjs/operators';
 
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -35,11 +33,8 @@ type PostDetailVm =
   imports: [
     AsyncPipe,
     DatePipe,
-    RouterLink,
     ReactiveFormsModule,
     MatButtonModule,
-    MatCardModule,
-    MatDividerModule,
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
@@ -52,16 +47,18 @@ export class PostDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
 
-  /** Refresh trigger : après POST commentaire, on refetch le détail (source de vérité back). */
+  /** Refresh trigger : après POST commentaire, on refetch le détail */
   private readonly refresh$ = new Subject<void>();
 
-  /** UI state erreurs (pattern cohérent avec ton code actuel) */
+  /** UI state erreurs */
   readonly submitting = signal(false);
   readonly globalError = signal<string | null>(null);
   readonly fieldErrors = signal<Record<string, string[]>>({});
 
-  /** Form commentaire : MVP = required uniquement, le back valide le reste. */
+  /** Form commentaire : required uniquement, le back valide le reste. */
   readonly commentForm = this.fb.nonNullable.group({
     content: this.fb.nonNullable.control('', { validators: [Validators.required] }),
   });
@@ -77,12 +74,10 @@ export class PostDetailComponent {
     switchMap(([postId]) =>
       this.postsApi.getPost(postId).pipe(
         map((post) => {
-          // On stabilise l’ordre commentaire côté front (plus récent d’abord)
-          const sorted = {
+          const sorted: PostDetailResponse = {
             ...post,
             comments: [...post.comments].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           };
-
           return { loading: false, error: null, post: sorted } as PostDetailVm;
         }),
         startWith({ loading: true, error: null, post: null } as PostDetailVm),
@@ -98,9 +93,14 @@ export class PostDetailComponent {
     takeUntilDestroyed(this.destroyRef)
   );
 
-  getFieldErrorFirst(field: 'content'): string | null {
-    const msgs = this.fieldErrors()[field];
-    return msgs?.[0] ?? null;
+  commentErrorMessage(): string | null {
+    const server = this.fieldErrors()['content']?.[0];
+    if (server) return server;
+
+    const ctrl = this.commentForm.get('content');
+    if (ctrl?.touched && ctrl.hasError('required')) return 'Le commentaire est requis.';
+
+    return null;
   }
 
   onSubmitComment(postId: number): void {
@@ -122,18 +122,28 @@ export class PostDetailComponent {
       )
       .subscribe({
         next: () => {
-          this.commentForm.reset(); // nonNullable -> remet ''
-          this.refresh$.next(); // refetch GET
+          this.commentForm.reset({ content: '' });
+          this.refresh$.next();
         },
         error: (err) => this.handleApiError(err),
       });
+  }
+
+  goBack(): void {
+    const historyLen = globalThis.history?.length ?? 0;
+
+    if (historyLen > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigateByUrl('/feed');
   }
 
   private handleApiError(err: unknown): void {
     if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
       this.globalError.set(err.error.message);
 
-      const map = toFieldErrorMap(err.error.fieldErrors); // Record<string, string[]>
+      const map = toFieldErrorMap(err.error.fieldErrors);
       this.fieldErrors.set(map);
       this.applyServerErrorsToControls(map);
 
