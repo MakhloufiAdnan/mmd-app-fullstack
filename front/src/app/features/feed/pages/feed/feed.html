@@ -1,82 +1,79 @@
 <div class="mdd-article feed-page">
   @if (vm$ | async; as vm) {
-  <div class="feed-toolbar">
-    <!-- bouton création : visible mais pas cliquable -->
-    <button
-      class="mdd-btn"
-      mat-flat-button
-      color="primary"
-      type="button"
-      [routerLink]="['/posts/new']"
-    >
-      Créer un article
-    </button>
-
-    <!-- Tri -->
-    <button class="mdd-btn sort-btn" mat-button type="button" [matMenuTriggerFor]="sortMenu">
-      <span class="sort-text">Trier par</span>
-
-      <mat-icon class="sort-icon" [class.is-asc]="vm.order === 'asc'" aria-hidden="true">
-        arrow_downward
-      </mat-icon>
-    </button>
-
-    <mat-menu #sortMenu="matMenu">
-      <button mat-menu-item type="button" (click)="onOrderChange('desc')">
-        <mat-icon
-          aria-hidden="true"
-          [style.visibility]="vm.order === 'desc' ? 'visible' : 'hidden'"
-        >
-          check
-        </mat-icon>
-        Plus récents
+    <div class="feed-toolbar">
+      <button
+        class="mdd-btn"
+        mat-flat-button
+        color="primary"
+        type="button"
+        [routerLink]="['/posts/new']"
+      >
+        Créer un article
       </button>
 
-      <button mat-menu-item type="button" (click)="onOrderChange('asc')">
-        <mat-icon aria-hidden="true" [style.visibility]="vm.order === 'asc' ? 'visible' : 'hidden'">
-          check
-        </mat-icon>
-        Plus anciens
+      <button
+        class="mdd-btn sort-btn"
+        mat-button
+        type="button"
+        [matMenuTriggerFor]="sortMenu"
+        [disabled]="vm.feed.length === 0"
+        aria-label="Trier par"
+      >
+        Trier par
+        <span class="sort-icon" [class.is-asc]="vm.order === 'asc'">↓</span>
       </button>
-    </mat-menu>
-  </div>
 
-  @if (vm.loading) {
-  <div class="center">
-    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-  </div>
-  } @else { @if (vm.error) {
-  <p class="error">{{ vm.error }}</p>
-  } @else {
-  <div class="feed-grid">
-    @for (post of vm.feed; track post.id) {
-    <mat-card
-      class="feed-card mdd-card"
-      role="button"
-      tabindex="0"
-      [routerLink]="['/posts', post.id]"
-      (keydown.enter)="$event.preventDefault()"
-      (keydown.space)="$event.preventDefault()"
-    >
-      <h2 class="feed-title">{{ post.title }}</h2>
+      <mat-menu #sortMenu="matMenu">
+        <button mat-menu-item type="button" (click)="onOrderChange('desc')">
+          Du plus récent au plus ancien
+        </button>
+        <button mat-menu-item type="button" (click)="onOrderChange('asc')">
+          Du plus ancien au plus récent
+        </button>
+      </mat-menu>
+    </div>
 
-      <div class="feed-meta">
-        <div>
-          <div class="meta-label">Date</div>
-          <div class="meta-value">{{ post.createdAt | date : 'shortDate' }}</div>
-        </div>
-
-        <div>
-          <div class="meta-label">Auteur</div>
-          <div class="meta-value">{{ post.author.username }}</div>
-        </div>
+    @if (vm.loading) {
+      <div class="center">
+        <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
       </div>
+    } @else {
+      @if (vm.error) {
+        <p class="error">{{ vm.error }}</p>
+      }
 
-      <div class="feed-footer">
-        {{ formatComments(post.commentsCount) }}
-      </div>
-    </mat-card>
+      @if (vm.feed.length === 0 && !vm.error) {
+        <p class="empty">
+          Vous n'êtes abonné à aucun thème. Abonnez-vous à vos thèmes préférés dans la section Thèmes.
+        </p>
+      } @else {
+        <div class="feed-grid">
+          @for (post of vm.feed; track post.id) {
+            <a class="feed-card-link" [routerLink]="['/posts', post.id]" aria-label="Voir l'article">
+              <mat-card class="feed-card mdd-card">
+                <h2 class="feed-title">{{ post.title }}</h2>
+
+                <div class="feed-meta">
+                  <div class="meta-col meta-col-left">
+                    <div class="meta-label">Date</div>
+                    <div class="meta-value">{{ post.createdAt | date : 'dd/MM/yyyy' }}</div>
+                  </div>
+
+                  <div class="meta-col meta-col-right">
+                    <div class="meta-label">Auteur</div>
+                    <div class="meta-value">{{ post.author.username }}</div>
+                  </div>
+                </div>
+
+                <div class="feed-content">
+                  <span class="content-label">Content:</span>
+                  <span class="content-text">{{ post.content }}</span>
+                </div>
+              </mat-card>
+            </a>
+          }
+        </div>
+      }
     }
-  </div>
-  } } }
+  }
 </div>
