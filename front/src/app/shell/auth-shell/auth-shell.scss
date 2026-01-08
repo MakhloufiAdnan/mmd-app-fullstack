@@ -15,10 +15,27 @@
 }
 
 .topbar {
-  height: 72px;
-  padding: 0 16px;
-  border-bottom: 2px solid #000;
+  padding: 56px;
   background: #fff;
+
+  box-sizing: border-box;
+  width: 100%;
+
+  position: relative;
+
+  min-height: 72px;
+}
+
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 100vw;      
+  height: 2px;
+  bottom: 0;
+  background: #000;
 }
 
 .brand img {
@@ -69,6 +86,9 @@
   display: block;
 }
 
+.logo-header{
+  scale : 2;
+}
 /* Burger mobile */
 .burger-btn {
   display: none;

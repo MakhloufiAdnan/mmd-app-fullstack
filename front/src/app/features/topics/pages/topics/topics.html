@@ -1,7 +1,4 @@
 <mat-card class="page">
-  <h1>Thèmes</h1>
-  <mat-divider></mat-divider>
-
   @if (vm$ | async; as vm) { @if (vm.loading) {
   <div class="center">
     <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
@@ -13,13 +10,18 @@
   } @else {
   <div class="topics">
     @for (topic of vm.topics; track trackById($index, topic)) {
-    <mat-card class="topic-card">
-      <div class="topic-row">
-        <div class="topic-name">{{ topic.name }}</div>
+    <mat-card class="topic-card mdd-card">
+      <div class="topic-title">{{ topic.name }}</div>
 
+      <p class="topic-description">
+        <span class="topic-description-label">Description:</span>
+        {{ topic.description }}
+      </p>
+
+      <div class="topic-actions">
         <button
-          class="mdd-btn" 
-          mat-flat-button 
+          class="mdd-btn"
+          mat-flat-button
           color="primary"
           type="button"
           (click)="onSubscribe(topic.id)"
@@ -27,7 +29,7 @@
         >
           @if (vm.pendingIds.has(topic.id)) {
           <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
-          } @if (topic.subscribed) { Déjà abonné } @else { S’abonner }
+          } @if (topic.subscribed) { Déjà abonné } @else { S'abonner }
         </button>
       </div>
     </mat-card>
