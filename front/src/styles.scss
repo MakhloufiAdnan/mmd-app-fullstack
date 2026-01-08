@@ -48,11 +48,11 @@ $article-surface: #f5f5f5;
   --mdc-filled-button-container-shape: 5px;
 }
 
-// Forme + clipping ripple (le plus important)
+// Forme + clipping ripple 
 .mdd-btn.mat-mdc-button-base,
 .auth-submit.mat-mdc-button-base {
   border-radius: 5px !important;
-  overflow: hidden; // clippe le ripple aux coins arrondis
+  overflow: hidden; 
 }
 
 // Couches internes MDC à arrondir aussi
@@ -65,23 +65,24 @@ $article-surface: #f5f5f5;
   border-radius: 5px !important;
 }
 
-// Variante "plein largeur" (utile mobile)
+// Variante "plein largeur" 
 .mdd-btn--full {
   width: 100%;
 }
 
-// Petit helper spinner inline (si tu mets un mat-progress-spinner dans le bouton)
+// Petit helper spinner inline 
 .mdd-btn-spinner {
   display: inline-flex;
   align-items: center;
 }
 
 /* ================================
-   Reset / global layout
-   ================================ */
+   Global overrides (MDD)
+================================ */
 
-* {
-  box-sizing: border-box;
+:root {
+  --mat-sys-background: #ffffff !important;
+  --mat-sys-surface: #ffffff !important;
 }
 
 html,
@@ -91,14 +92,26 @@ body {
 
 body {
   margin: 0;
+  background: #ffffff;
 }
 
-/* Fond commun des pages (Topics/Feed…) */
-.mdd-article {
-  background: $article-surface;
+.mat-app-background,
+.mat-drawer-container,
+.mat-sidenav-container {
+  background-color: #ffffff !important;
 }
 
-/* Drawer backdrop */
-.mat-drawer-backdrop.mat-drawer-shown {
-  background-color: rgba(0, 0, 0, 0.3);
+.mat-mdc-card {
+  box-shadow: none !important;
+
+  --mdc-elevated-card-container-elevation: 0px;
+  --mdc-outlined-card-container-elevation: 0px;
+}
+
+.mdd-card {
+  background-color: #f5f5f5 !important;
+
+  /* Couleur container MDC (selon version / type de card) */
+  --mdc-elevated-card-container-color: #f5f5f5;
+  --mdc-outlined-card-container-color: #f5f5f5;
 }

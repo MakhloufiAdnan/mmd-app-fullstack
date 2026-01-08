@@ -12,8 +12,8 @@ describe('TopicsComponent', () => {
         {
           provide: TopicsApiService,
           useValue: {
-            // Minimal stub for a "smoke test": Topics component expects an Observable.
-            listTopics: () => of([{ id: 1, name: 'Java', subscribed: true }]),
+            listTopics: () =>
+              of([{ id: 1, name: 'Java', description: 'Java description', subscribed: true }]),
             subscribeToTopic: () => of({ id: 1 }),
           },
         },

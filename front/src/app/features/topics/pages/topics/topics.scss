@@ -1,43 +1,56 @@
+/* Container page : max-width + marges latérales 24, pas de padding bottom */
 .page {
-  padding: 16px;
-  max-width: 900px;
+  max-width: 1300px;
   margin: 0 auto;
+  padding: 24px 24px 0;
+  background: transparent !important; /* évite la teinte si mat-card wrapper */
 }
 
+/* Grid : 2 colonnes (50/50), gap 16 colonnes, 24 lignes */
 .topics {
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 24px;
+  margin: 0;
 }
 
+/* Cards : pas de margin externe (le grid gère), padding interne OK */
 .topic-card {
-  padding: 12px;
+  margin: 0;
+  padding: 16px;
+  border-radius: 8px;
 }
 
-.topic-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.topic-title {
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
-.topic-name {
-  font-weight: 600;
+.topic-description {
+  margin: 0 0 16px;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+
+  overflow: hidden;
 }
 
-.center {
+.topic-description-label {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.topic-actions {
   display: flex;
   justify-content: center;
-  padding: 24px 0;
-}
-
-.error {
-  margin-top: 12px;
 }
 
 @media (max-width: 600px) {
-  .topic-row {
-    flex-direction: column;
-    align-items: stretch;
+  .topics {
+    grid-template-columns: 1fr;
   }
 }
