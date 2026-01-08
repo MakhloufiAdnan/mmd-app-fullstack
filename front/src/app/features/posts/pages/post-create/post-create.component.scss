@@ -1,23 +1,62 @@
 .container {
-  max-width: 760px;
+  max-width: 480px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px 24px 0;
 }
 
-.header {
+.page-header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  h1 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-  }
+  justify-content: center;
+  margin: 24px 0 16px;
 }
 
 .back {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   text-decoration: none;
+  color: #000;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.field {
+  width: 100%;
+}
+
+/* ✅ Bordure violette (outline) */
+.field .mdc-notched-outline__leading,
+.field .mdc-notched-outline__notch,
+.field .mdc-notched-outline__trailing {
+  border-color: #6f5bd3 !important;
+}
+
+.field.mat-focused .mdc-notched-outline__leading,
+.field.mat-focused .mdc-notched-outline__notch,
+.field.mat-focused .mdc-notched-outline__trailing {
+  border-color: #6f5bd3 !important;
+}
+
+.submit {
+  align-self: center;
+  margin-top: 16px;
+  min-width: 160px;
 }
 
 .loading {
@@ -26,19 +65,10 @@
   padding: 24px 0;
 }
 
-.form {
-  display: grid;
-  gap: 14px;
-  margin-top: 16px;
-}
-
-.submit {
-  justify-self: end;
-}
-
 .global-error {
-  margin-top: 12px;
+  margin: 12px 0;
   padding: 10px 12px;
+  border: 1px solid rgba(244, 67, 54, 0.4);
   border-radius: 8px;
 }
 
@@ -47,8 +77,24 @@
   opacity: 0.85;
 }
 
-.hint-inline {
-  margin-top: 6px;
-  font-size: 12px;
-  opacity: 0.75;
+@media (max-width: 600px) {
+  .container {
+    max-width: 480px;
+    padding: 16px 24px 0;
+  }
+
+  .page-header {
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .back {
+    position: static;
+    transform: none;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+  }
 }

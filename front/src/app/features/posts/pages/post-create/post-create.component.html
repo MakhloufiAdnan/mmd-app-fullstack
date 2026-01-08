@@ -1,7 +1,7 @@
 <section class="container">
-  <header class="header">
-    <a class="back" routerLink="/feed">← Retour</a>
-    <h1>Créer un article</h1>
+  <header class="page-header">
+    <a class="back" routerLink="/feed" aria-label="Retour">←</a>
+    <h1 class="title">Créer un nouvel article</h1>
   </header>
 
   @if (globalError(); as ge) {
@@ -14,23 +14,22 @@
     </div>
   } @else {
     @if (error$ | async; as errMsg) {
-      @if (errMsg) {
-        <p class="global-error">{{ errMsg }}</p>
-      }
+      <p class="global-error">{{ errMsg }}</p>
     }
 
     @if (topics$ | async; as topics) {
       @if (!hasAnySubscribedTopics(topics)) {
-        <p class="hint">
-          Tu dois être abonné à au moins un thème pour publier un article.
-        </p>
+        <p class="hint">Tu dois être abonné à au moins un thème pour publier un article.</p>
       }
 
       <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline">
-          <mat-label>Thème</mat-label>
-
-          <mat-select formControlName="topicId">
+        <!-- Topic -->
+        <mat-form-field class="field" appearance="outline">
+          <mat-select
+            formControlName="topicId"
+            placeholder="Sélectionner un thème"
+            aria-label="Sélectionner un thème"
+          >
             @for (t of topics; track t.id) {
               <mat-option [value]="t.id" [disabled]="!t.subscribed">
                 {{ t.name }}
@@ -38,47 +37,63 @@
             }
           </mat-select>
 
-          <!-- Erreur serveur prioritaire -->
-          @if (getFieldErrorFirst('topicId'); as fe) {
-            <mat-error>{{ fe }}</mat-error>
-          } @else if (form.get('topicId')?.hasError('required') && form.get('topicId')?.touched) {
-            <mat-error>Le thème est requis.</mat-error>
-          }
-
-          <div class="hint-inline">
-            Vous devez être abonné à un thème pour publier.
-          </div>
+          @if (
+            (getFieldErrorFirst('topicId') ??
+              (form.get('topicId')?.touched && form.get('topicId')?.hasError('required')
+                ? 'Le thème est requis.'
+                : null)
+            );
+            as msg
+          ) {<mat-error>{{ msg }}</mat-error>}
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Titre</mat-label>
-          <input matInput formControlName="title" />
+        <!-- Title -->
+        <mat-form-field class="field" appearance="outline">
+          <input
+            matInput
+            formControlName="title"
+            placeholder="Titre de l'article"
+            aria-label="Titre de l'article"
+          />
 
-          @if (getFieldErrorFirst('title'); as fe) {
-            <mat-error>{{ fe }}</mat-error>
-          } @else if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
-            <mat-error>Le titre est requis.</mat-error>
-          }
+          @if (
+            (getFieldErrorFirst('title') ??
+              (form.get('title')?.touched && form.get('title')?.hasError('required')
+                ? 'Le titre est requis.'
+                : null)
+            );
+            as msg
+          ) {<mat-error>{{ msg }}</mat-error>}
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Contenu</mat-label>
-          <textarea matInput rows="8" formControlName="content"></textarea>
+        <!-- Content -->
+        <mat-form-field class="field" appearance="outline">
+          <textarea
+            matInput
+            rows="8"
+            formControlName="content"
+            placeholder="Contenu de l'article"
+            aria-label="Contenu de l'article"
+          ></textarea>
 
-          @if (getFieldErrorFirst('content'); as fe) {
-            <mat-error>{{ fe }}</mat-error>
-          } @else if (form.get('content')?.hasError('required') && form.get('content')?.touched) {
-            <mat-error>Le contenu est requis.</mat-error>
-          }
+          @if (
+            (getFieldErrorFirst('content') ??
+              (form.get('content')?.touched && form.get('content')?.hasError('required')
+                ? 'Le contenu est requis.'
+                : null)
+            );
+            as msg
+          ) {<mat-error>{{ msg }}</mat-error>}
         </mat-form-field>
 
         <button
           mat-flat-button
+          color="primary"
           type="submit"
-          class="submit"
+          class="mdd-btn submit"
           [disabled]="form.invalid || submitting()"
         >
-          Publier
+          Créer
         </button>
       </form>
     }
