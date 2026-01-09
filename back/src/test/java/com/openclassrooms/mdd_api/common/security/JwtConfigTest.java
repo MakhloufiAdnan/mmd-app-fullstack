@@ -20,14 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * SUT:
  *  - JwtConfig: secret -> key bytes (HEX-even vs UTF-8), HS256 key length guard, encoder/decoder.
- *
- * Notes:
- *  - Spring Security converts the 'iss' claim to java.net.URL at decode time.
- *    Therefore issuer must be a valid URL (e.g. "https://test") for round-trip tests.
- *
- * Run:
- *  - Windows: .\mvnw.cmd -Dtest=JwtConfigTest test
- *  - Linux/Mac: ./mvnw -Dtest=JwtConfigTest test
  */
 class JwtConfigTest {
 

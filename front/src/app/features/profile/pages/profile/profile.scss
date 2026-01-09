@@ -1,39 +1,111 @@
-.profile {
+.profile-page {
   max-width: 920px;
-  margin: 16px auto;
-  padding: 0 16px;
-  display: grid;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.page-title {
+  text-align: center;
+  margin: 24px 0 16px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.profile-form {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 
 .field {
-  width: 100%;
-  margin-top: 8px;
+  width: min(360px, 100%);
 }
 
 .actions {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 8px;
 }
 
-.error {
-  margin: 8px 0;
+.global-error {
+  width: min(360px, 100%);
+  margin: 0;
+  text-align: center;
+}
+
+.center {
+  text-align: center;
+}
+
+.separator {
+  height: 1px;
+  width: 100%;
+  background: #000000;
+  margin: 32px 0;
+}
+
+.subscriptions-title {
+  text-align: center;
+  margin: 0 0 24px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.topics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .topics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.topic-card {
+  background: #f2f2f2;
+  border-radius: 12px;
+}
+
+.topic-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.topic-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.topic-desc {
+  margin: 0;
+
+  /* Troncature 3 lignes */
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.topic-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.empty-message {
+  text-align: center;
+  margin: 16px 0 0;
 }
 
 .spinner {
   display: flex;
   justify-content: center;
   padding: 24px 0;
-}
-.sub-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.sub-name {
-  flex: 1;
 }

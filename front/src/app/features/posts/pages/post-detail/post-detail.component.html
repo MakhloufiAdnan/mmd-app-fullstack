@@ -1,74 +1,89 @@
-<section class="container">
-  <header class="header">
-    <a class="back" routerLink="/feed">← Retour</a>
-    <h1>Détail</h1>
-  </header>
+<section class="page">
+  @if (vm$ | async; as vm) {
+    <header class="header">
+      <button type="button" class="back" (click)="goBack()" aria-label="Retour">←</button>
 
-  @if (globalError(); as ge) {
-  <p class="global-error">{{ ge }}</p>
-  } @if (vm$ | async; as vm) { @if (vm.loading) {
-  <div class="loading">
-    <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
-  </div>
-  } @else if (vm.error) {
-  <p class="global-error">{{ vm.error }}</p>
-  } @else if (vm.post; as post) {
-  <mat-card class="card mdd-card">
-    <div class="topic">{{ post.topic.name }}</div>
-    <h2 class="title">{{ post.title }}</h2>
+      <h1 class="title">
+        @if (vm.post; as post) { {{ post.title }} } @else { Titre de l’article sélectionné }
+      </h1>
+    </header>
 
-    <div class="meta">
-      <span class="meta-item">Auteur : {{ post.author.username }}</span>
-      <span class="meta-item">Date : {{ post.createdAt | date : 'shortDate' }}</span>
-    </div>
-
-    <mat-divider></mat-divider>
-
-    <p class="content">{{ post.content }}</p>
-  </mat-card>
-
-  <section class="comments">
-    <h3>Commentaires ({{ post.comments.length }})</h3>
-
-    @if (post.comments.length === 0) {
-    <p class="empty">Aucun commentaire pour le moment.</p>
-    } @else {
-    <div class="comment-list">
-      @for (c of post.comments; track c.id) {
-      <mat-card class="comment-card">
-        <div class="comment-meta">
-          <span class="author">{{ c.author.username }}</span>
-          <span class="date">{{ c.createdAt | date : 'shortDate' }}</span>
-        </div>
-        <div class="comment-content">{{ c.content }}</div>
-      </mat-card>
-      }
-    </div>
+    @if (globalError(); as ge) {
+      <p class="global-error">{{ ge }}</p>
     }
-    
-    <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="onSubmitComment(post.id)">
-      <mat-form-field appearance="outline" class="comment-field">
-        <mat-label>Ajouter un commentaire</mat-label>
-        <textarea matInput rows="3" formControlName="content"></textarea>
 
-        @if (getFieldErrorFirst('content'); as fe) {
-        <mat-error>{{ fe }}</mat-error>
-        } @else if (commentForm.get('content')?.hasError('required') &&
-        commentForm.get('content')?.touched) {
-        <mat-error>Le contenu est requis.</mat-error>
+    @if (vm.loading) {
+      <div class="loading">
+        <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+      </div>
+    } @else if (vm.error) {
+      <p class="global-error">{{ vm.error }}</p>
+    } @else if (vm.post; as post) {
+      <div class="meta">
+        <div class="meta-item">
+          <div class="meta-label">Date</div>
+          <div class="meta-value">{{ post.createdAt | date : 'dd/MM/yyyy' }}</div>
+        </div>
+
+        <div class="meta-item meta-center">
+          <div class="meta-label">Auteur</div>
+          <div class="meta-value">{{ post.author.username }}</div>
+        </div>
+
+        <div class="meta-item meta-topic">
+          <div class="meta-label">Thème</div>
+          <div class="meta-value">{{ post.topic.name }}</div>
+        </div>
+      </div>
+
+      <p class="content">
+        <span class="content-label">Content:</span>
+        <span class="content-text">{{ post.content }}</span>
+      </p>
+
+      <div class="separator"></div>
+
+      <section class="comments">
+        <h2 class="comments-title">Commentaires</h2>
+
+        @if (post.comments.length === 0) {
+          <p class="empty">Aucun commentaire</p>
+        } @else {
+          <div class="comment-list">
+            @for (c of post.comments; track c.id) {
+              <div class="comment-row">
+                <div class="comment-user">{{ c.author.username }}</div>
+                <div class="comment-bubble">{{ c.content }}</div>
+              </div>
+            }
+          </div>
         }
-      </mat-form-field>
 
-      <button
-        mat-icon-button
-        type="submit"
-        class="send-btn"
-        [disabled]="commentForm.invalid || submitting()"
-        aria-label="Envoyer le commentaire"
-      >
-        <img src="assets/logo-envoyer.png" alt="" />
-      </button>
-    </form>
-  </section>
-  } }
+        <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="onSubmitComment(post.id)">
+          <div class="comment-row-input">
+            <mat-form-field appearance="outline" class="comment-field">
+              <textarea
+                matInput
+                rows="4"
+                formControlName="content"
+                placeholder="Écrivez ici votre commentaire"
+                aria-label="Écrivez ici votre commentaire"
+              ></textarea>
+
+              @if (commentErrorMessage(); as msg) {<mat-error>{{ msg }}</mat-error>}
+            </mat-form-field>
+
+            <button
+              class="send"
+              type="submit"
+              [disabled]="commentForm.invalid || submitting()"
+              aria-label="Envoyer le commentaire"
+            >
+              <img src="assets/logo-envoyer.png" alt="" />
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+  }
 </section>

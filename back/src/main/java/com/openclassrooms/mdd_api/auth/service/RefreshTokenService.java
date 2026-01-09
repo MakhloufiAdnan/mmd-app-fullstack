@@ -47,7 +47,7 @@ public class RefreshTokenService {
      * Rotation du refresh token :
      *  consomme le token existant (révocation)
      *  émet un nouveau token
-     * Robustesse : la lecture est verrouillée (PESSIMISTIC_WRITE) pour empêcher
+     * La lecture est verrouillée (PESSIMISTIC_WRITE) pour empêcher
      * deux refresh concurrents de consommer le même token.
      */
     @Transactional
