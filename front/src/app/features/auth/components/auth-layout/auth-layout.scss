@@ -36,13 +36,14 @@
 /* Gros logo : visible sur mobile, caché sur desktop */
 .auth-mobile-logo {
   margin-top: 32px;
-  height: 88px;
+  height: 130px;
   width: auto;
 }
 
 .auth-title {
   margin: 16px 0 0;
   text-align: center;
+  font-size: 24px;
 }
 
 /* Conteneur du formulaire (fourni par ng-content) */
@@ -63,12 +64,12 @@
   }
 
   .auth-title {
-    margin-top: 48px; 
+    margin-top: 48px;
   }
 }
 
 /* Mobile : header masqué */
-@media (max-width: 599px) {
+@media (max-width: 600px) {
   .auth-header {
     display: none;
   }

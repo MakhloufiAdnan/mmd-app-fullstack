@@ -1,54 +1,89 @@
 <mdd-auth-layout title="Inscription">
   <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
     @if (globalError()) {
-    <p class="auth-error">{{ globalError() }}</p>
+      <p class="auth-error">{{ globalError() }}</p>
     }
 
-    <mat-form-field appearance="outline">
-      <mat-label>Nom d'utilisateur</mat-label>
-      <input
-        matInput
-        type="text"
-        name="username"
-        autocomplete="username"
-        formControlName="username"
-      />
-      @if (form.controls.username.touched && form.controls.username.hasError('required')) {
-      <mat-error>Champ obligatoire</mat-error>
-      } @if (fieldErrors()?.['username']?.length) {
-      <mat-error>{{ fieldErrors()?.['username']?.[0] }}</mat-error>
-      }
-    </mat-form-field>
+    <div class="auth-field">
+      <label class="auth-label" for="username">
+        Nom d'utilisateur<span class="auth-required" aria-hidden="true"></span>
+      </label>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Adresse e-mail</mat-label>
-      <input matInput type="email" name="email" autocomplete="email" formControlName="email" />
-      @if (form.controls.email.touched && form.controls.email.hasError('required')) {
-      <mat-error>Champ obligatoire</mat-error>
-      } @if (form.controls.email.touched && form.controls.email.hasError('email')) {
-      <mat-error>E-mail invalide</mat-error>
-      } @if (fieldErrors()?.['email']?.length) {
-      <mat-error>{{ fieldErrors()?.['email']?.[0] }}</mat-error>
-      }
-    </mat-form-field>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="username"
+          type="text"
+          name="username"
+          autocomplete="username"
+          formControlName="username"
+          required
+        />
 
-    <mat-form-field appearance="outline">
-      <mat-label>Mot de passe</mat-label>
-      <input
-        matInput
-        type="password"
-        name="password"
-        autocomplete="new-password"
-        formControlName="password"
-      />
-      @if (form.controls.password.touched && form.controls.password.hasError('required')) {
-      <mat-error>Champ obligatoire</mat-error>
-      } @if (form.controls.password.touched && form.controls.password.hasError('passwordPolicy')) {
-      <mat-error>8+ caractères, 1 chiffre, 1 minuscule, 1 majuscule, 1 spécial</mat-error>
-      } @if (fieldErrors()?.['password']?.length) {
-      <mat-error>{{ fieldErrors()?.['password']?.[0] }}</mat-error>
-      }
-    </mat-form-field>
+        @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+          <mat-error>Champ obligatoire</mat-error>
+        }
+        @if (fieldErrors()?.['username']?.length) {
+          <mat-error>{{ fieldErrors()?.['username']?.[0] }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="auth-field">
+      <label class="auth-label" for="email">
+        Adresse e-mail<span class="auth-required" aria-hidden="true"></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          formControlName="email"
+          required
+        />
+
+        @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+          <mat-error>Champ obligatoire</mat-error>
+        }
+        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+          <mat-error>E-mail invalide</mat-error>
+        }
+        @if (fieldErrors()?.['email']?.length) {
+          <mat-error>{{ fieldErrors()?.['email']?.[0] }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="auth-field">
+      <label class="auth-label" for="password">
+        Mot de passe<span class="auth-required" aria-hidden="true"></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="password"
+          type="password"
+          name="password"
+          autocomplete="new-password"
+          formControlName="password"
+          required
+        />
+
+        @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+          <mat-error>Champ obligatoire</mat-error>
+        }
+        @if (form.controls.password.touched && form.controls.password.hasError('passwordPolicy')) {
+          <mat-error>8+ caractères, 1 chiffre, 1 minuscule, 1 majuscule, 1 spécial</mat-error>
+        }
+        @if (fieldErrors()?.['password']?.length) {
+          <mat-error>{{ fieldErrors()?.['password']?.[0] }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <button
       class="auth-submit"

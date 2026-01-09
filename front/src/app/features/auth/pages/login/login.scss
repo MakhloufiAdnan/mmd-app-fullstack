@@ -9,6 +9,20 @@ mat-form-field {
   width: 100%;
 }
 
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-label {
+  font-weight: 600;
+}
+
+.auth-required {
+  margin-left: 2px;
+}
+
 .auth-error {
   margin: 0;
   padding: 10px 12px;

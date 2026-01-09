@@ -1,40 +1,58 @@
 <mdd-auth-layout title="Se connecter">
   <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()">
     @if (globalError()) {
-    <p class="auth-error">{{ globalError() }}</p>
+      <p class="auth-error">{{ globalError() }}</p>
     }
 
-    <mat-form-field appearance="outline">
-      <mat-label>E-mail ou nom d'utilisateur</mat-label>
-      <input
-        matInput
-        type="text"
-        name="username"
-        autocomplete="username"
-        formControlName="identifier"
-      />
-      @if (form.controls.identifier.touched && form.controls.identifier.hasError('required')) {
-      <mat-error>Champ obligatoire</mat-error>
-      } @if (fieldErrors()?.['identifier']?.length) {
-      <mat-error>{{ fieldErrors()?.['identifier']?.[0] }}</mat-error>
-      }
-    </mat-form-field>
+    <div class="auth-field">
+      <label class="auth-label" for="identifier">
+        E-mail ou nom d'utilisateur<span class="auth-required" aria-hidden="true"></span>
+      </label>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Mot de passe</mat-label>
-      <input
-        matInput
-        type="password"
-        name="password"
-        autocomplete="current-password"
-        formControlName="password"
-      />
-      @if (form.controls.password.touched && form.controls.password.hasError('required')) {
-      <mat-error>Champ obligatoire</mat-error>
-      } @if (fieldErrors()?.['password']?.length) {
-      <mat-error>{{ fieldErrors()?.['password']?.[0] }}</mat-error>
-      }
-    </mat-form-field>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="identifier"
+          type="text"
+          name="username"
+          autocomplete="username"
+          formControlName="identifier"
+          required
+        />
+
+        @if (form.controls.identifier.touched && form.controls.identifier.hasError('required')) {
+          <mat-error>Champ obligatoire</mat-error>
+        }
+        @if (fieldErrors()?.['identifier']?.length) {
+          <mat-error>{{ fieldErrors()?.['identifier']?.[0] }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="auth-field">
+      <label class="auth-label" for="loginPassword">
+        Mot de passe<span class="auth-required" aria-hidden="true"></span>
+      </label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          id="loginPassword"
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          formControlName="password"
+          required
+        />
+
+        @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+          <mat-error>Champ obligatoire</mat-error>
+        }
+        @if (fieldErrors()?.['password']?.length) {
+          <mat-error>{{ fieldErrors()?.['password']?.[0] }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <button
       class="auth-submit"
