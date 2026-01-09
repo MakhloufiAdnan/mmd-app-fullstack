@@ -5,6 +5,8 @@ oc:
     jwtSecret: ${TOKEN_SECRET}
     cookieSecure: ${COOKIE_SECURE:false}
 spring:
+  config:
+      import: optional:file:./.env[.properties]
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USER}
@@ -32,3 +34,6 @@ logging:
             CommonsRequestLoggingFilter: info
     com:
       openclassrooms: info
+seed:
+  demo:
+    data: ${SEED_DEMO_DATA:false}

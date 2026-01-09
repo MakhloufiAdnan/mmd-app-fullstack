@@ -11,6 +11,8 @@ import com.openclassrooms.mdd_api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Component
+@Order(10)
+@ConditionalOnProperty(prefix = "seed.demo", name = "data", havingValue = "true")
 @RequiredArgsConstructor
 public class DevPostCommentSeeder implements ApplicationRunner {
 

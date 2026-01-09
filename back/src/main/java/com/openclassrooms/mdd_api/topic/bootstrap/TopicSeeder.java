@@ -5,12 +5,14 @@ import com.openclassrooms.mdd_api.topic.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Component
+@Order(0)
 @RequiredArgsConstructor
 public class TopicSeeder implements ApplicationRunner {
 
