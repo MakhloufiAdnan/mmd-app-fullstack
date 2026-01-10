@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthStore } from '../state/auth.store';
 import { ROUTER_TEST_PROVIDERS } from '@core/testing/test.providers';
+import { AUTH_REFRESH_ATTEMPTED } from './auth.http-context';
 
 describe('Auth Interceptor', () => {
   let http: HttpClient;
@@ -63,5 +64,28 @@ describe('Auth Interceptor', () => {
     const retry = httpMock.expectOne('/api/feed');
     expect(retry.request.headers.get('Authorization')).toBe('Bearer newToken');
     retry.flush([]);
+  });
+
+  it('should NOT refresh again when AUTH_REFRESH_ATTEMPTED is true (401)', (done) => {
+    // Arrange
+    store.setAccessToken('token');
+
+    const ctx = new HttpContext().set(AUTH_REFRESH_ATTEMPTED, true);
+
+    // Act
+    http.get('/api/feed', { context: ctx }).subscribe({
+      next: () => done.fail('Expected an error'),
+      error: (err) => {
+        // Assert
+        expect(err.status).toBe(401);
+        // Aucun refresh ne doit être déclenché
+        httpMock.expectNone('/api/auth/refresh');
+        done();
+      },
+    });
+
+    const req = httpMock.expectOne('/api/feed');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer token');
+    req.flush({}, { status: 401, statusText: 'Unauthorized' });
   });
 });
