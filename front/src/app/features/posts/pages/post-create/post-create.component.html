@@ -2,6 +2,7 @@
   <header class="page-header">
     <a class="back" routerLink="/feed" aria-label="Retour">←</a>
     <h1 class="title">Créer un nouvel article</h1>
+    <span class="page-header-spacer" aria-hidden="true"></span>
   </header>
 
   @if (globalError(); as ge) {
@@ -44,7 +45,7 @@
                 : null)
             );
             as msg
-          ) {<mat-error>{{ msg }}</mat-error>}
+          ) { <mat-error>{{ msg }}</mat-error> }
         </mat-form-field>
 
         <!-- Title -->
@@ -63,7 +64,7 @@
                 : null)
             );
             as msg
-          ) {<mat-error>{{ msg }}</mat-error>}
+          ) { <mat-error>{{ msg }}</mat-error> }
         </mat-form-field>
 
         <!-- Content -->
@@ -83,7 +84,7 @@
                 : null)
             );
             as msg
-          ) {<mat-error>{{ msg }}</mat-error>}
+          ) { <mat-error>{{ msg }}</mat-error> }
         </mat-form-field>
 
         <button

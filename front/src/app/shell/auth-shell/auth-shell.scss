@@ -57,7 +57,7 @@
 .desktop-nav {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .desktop-link {
@@ -77,13 +77,12 @@
 
 .desktop-logout {
   color: #d32f2f;
+  font-size: 14px;
 }
 
 .profile-btn img {
-  height: 34px;
-  width: 34px;
-  border-radius: 999px;
   display: block;
+  height: 32px;
 }
 
 .logo-header{
@@ -115,15 +114,14 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
 }
 
 .drawer-nav {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding-top: 8px;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 24px 16px 0 0;
 }
 
 .drawer-link {
@@ -134,7 +132,7 @@
   color: #000;
   cursor: pointer;
   text-decoration: none;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .drawer-logout {
@@ -147,17 +145,13 @@
   display: inline-flex;
 
   img {
-    height: 48px;
-    width: 48px;
-    border-radius: 999px;
     display: block;
-    padding-bottom: 32px;
     margin: 8px;
   }
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .desktop-nav {
     display: none;
   }

@@ -55,8 +55,18 @@
           Thèmes
         </a>
 
-        <a class="profile-btn" routerLink="/profile" aria-label="Profil">
-          <img src="assets/logo-profil.png" alt="Profil" />
+        <a
+          class="profile-btn"
+          routerLink="/profile"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          #profileRla="routerLinkActive"
+          aria-label="Profil"
+        >
+          <img
+            [src]="profileRla.isActive ? 'assets/logo-profil-select.png' : 'assets/logo-profil.png'"
+            alt="Profil"
+          />
         </a>
       </nav>
 
@@ -67,7 +77,7 @@
         (click)="drawer.toggle()"
         aria-label="Ouvrir le menu"
       >
-        <img src="assets/logo-burger.png" alt="" />
+        <img src="assets/logo-burger.png" alt="burger" />
       </button>
     </mat-toolbar>
 

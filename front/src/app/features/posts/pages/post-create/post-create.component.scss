@@ -1,22 +1,25 @@
 .container {
-  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+
+  align-items: stretch;
+  justify-content: flex-start;
+
   margin: 0 auto;
-  padding: 24px 24px 0;
+  padding: 48px 24px 0;
 }
 
 .page-header {
-  position: relative;
-  display: flex;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
+
   margin: 24px 0 16px;
 }
 
 .back {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  justify-self: start;
   text-decoration: none;
   color: #000;
   font-size: 26px;
@@ -24,9 +27,23 @@
 }
 
 .title {
+  justify-self: center;
   margin: 0;
+  text-align: center;
   font-size: 22px;
   font-weight: 700;
+}
+
+.page-header-spacer {
+  justify-self: end;
+}
+
+.form,
+.global-error,
+.hint {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .form {
@@ -38,18 +55,15 @@
 
 .field {
   width: 100%;
+
+  --mdc-outlined-text-field-outline-color: #6f5bd3;
+  --mdc-outlined-text-field-hover-outline-color: #6f5bd3;
+  --mdc-outlined-text-field-focus-outline-color: #6f5bd3;
 }
 
-/* ✅ Bordure violette (outline) */
 .field .mdc-notched-outline__leading,
 .field .mdc-notched-outline__notch,
 .field .mdc-notched-outline__trailing {
-  border-color: #6f5bd3 !important;
-}
-
-.field.mat-focused .mdc-notched-outline__leading,
-.field.mat-focused .mdc-notched-outline__notch,
-.field.mat-focused .mdc-notched-outline__trailing {
   border-color: #6f5bd3 !important;
 }
 
@@ -66,35 +80,30 @@
 }
 
 .global-error {
-  margin: 12px 0;
+  margin: 12px auto;
   padding: 10px 12px;
   border: 1px solid rgba(244, 67, 54, 0.4);
   border-radius: 8px;
 }
 
 .hint {
-  margin: 12px 0;
+  margin: 12px auto;
   opacity: 0.85;
 }
 
 @media (max-width: 600px) {
   .container {
-    max-width: 480px;
-    padding: 16px 24px 0;
+    padding: 24px 24px 0;
   }
 
   .page-header {
-    justify-content: flex-start;
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
   }
-
-  .back {
-    position: static;
-    transform: none;
-  }
-
   .title {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 20px;
+    margin-top: 12px;
   }
 }
