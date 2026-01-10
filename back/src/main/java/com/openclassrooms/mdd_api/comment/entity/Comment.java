@@ -19,8 +19,12 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Lob
-    @Column(nullable = false)
+    /**
+     * Contenu du commentaire.
+     * Aligné avec le DTO CreateCommentRequest : @Size(max=2000).
+     * Sans length explicite, Hibernate peut générer VARCHAR(255) -> conflit DB (409).
+     */
+    @Column(nullable = false, length = 2000)
     private String content;
 
     // Généré côté back
@@ -32,7 +36,7 @@ public class Comment {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    // FK -> users.id (auteur)
+    // FK -> users.id
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User author;

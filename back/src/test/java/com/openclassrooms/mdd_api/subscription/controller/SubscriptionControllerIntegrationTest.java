@@ -3,6 +3,7 @@ package com.openclassrooms.mdd_api.subscription.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mdd_api.auth.repository.RefreshTokenRepository;
 import com.openclassrooms.mdd_api.comment.repository.CommentRepository;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
 import com.openclassrooms.mdd_api.post.repository.PostRepository;
 import com.openclassrooms.mdd_api.subscription.repository.SubscriptionRepository;
 import com.openclassrooms.mdd_api.support.AbstractMySqlIntegrationTest;
@@ -170,7 +171,64 @@ class SubscriptionControllerIntegrationTest extends AbstractMySqlIntegrationTest
                 .andExpect(status().isNoContent());
     }
 
-    // ---------------- Helpers ----------------
+    // -----------------
+    // tests cas limites
+    // -----------------
+
+    @Test
+    @DisplayName("POST subscribe -> 404 when topic does not exist")
+    void subscribe_topicNotFound_returns_404() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        register(csrf, "edge@example.com", "Edge", "Aa1!aaaa");
+        String accessToken = accessToken(login(csrf, "edge@example.com", "Aa1!aaaa"));
+
+        String body = objectMapper.writeValueAsString(new SubscribePayload(9_999_999L));
+
+        // Act
+        var action = mockMvc.perform(post("/api/users/me/subscriptions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+
+        // Assert
+        action.andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Topic not found"));
+    }
+
+    @Test
+    @DisplayName("POST subscribe -> 400 when topicId is invalid (validation)")
+    void subscribe_invalidTopicId_returns_400() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        register(csrf, "bad-topic@example.com", "BadTopic", "Aa1!aaaa");
+        String accessToken = accessToken(login(csrf, "bad-topic@example.com", "Aa1!aaaa"));
+
+        String body = objectMapper.writeValueAsString(new SubscribePayload(-1L));
+
+        // Act
+        var action = mockMvc.perform(post("/api/users/me/subscriptions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+
+        // Assert
+        action.andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.message").value("Validation error"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("topicId"));
+    }
+
+    // -------
+    // Helpers
+    // -------
 
     private CsrfBundle initCsrf() throws Exception {
         MvcResult res = mockMvc.perform(get("/api/auth/csrf"))

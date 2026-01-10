@@ -9,6 +9,7 @@ import com.openclassrooms.mdd_api.user.entity.User;
 import com.openclassrooms.mdd_api.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,9 +28,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Tests d'intégration des endpoints UserMe :
- * GET /api/users/me (Bearer)
- * PUT /api/users/me (Bearer + CSRF)
- * Flux utilisé : CSRF > register > login > appel endpoint protégé,
+ *  - GET /api/users/me (Bearer)
+ *  - PUT /api/users/me (Bearer + CSRF selon config)
+ *
+ * Flux utilisé : CSRF -> register -> login -> appel endpoint protégé,
  * comme dans AuthFlowIntegrationTest.
  */
 @SpringBootTest
@@ -58,6 +60,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /api/users/me -> 200 (happy path)")
     void me_happy_path_returns_profile() throws Exception {
         // Arrange
         CsrfBundle csrf = initCsrf();
@@ -79,6 +82,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /api/users/me -> 401 when bearer missing")
     void me_without_bearer_returns_401_with_contract_payload() throws Exception {
         // Act + Assert
         mockMvc.perform(get("/api/users/me"))
@@ -90,6 +94,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /api/users/me -> 200 and updates email/username/password (happy path)")
     void update_me_happy_path_updates_email_username_and_password() throws Exception {
         // Arrange
         CsrfBundle csrf = initCsrf();
@@ -124,6 +129,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /api/users/me -> 200 with updated=false when body is empty")
     void update_me_empty_body_returns_updated_false() throws Exception {
         // Arrange
         CsrfBundle csrf = initCsrf();
@@ -144,6 +150,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /api/users/me -> 409 when email already used")
     void update_me_conflict_returns_409_with_contract_payload() throws Exception {
         // Arrange
         CsrfBundle csrf = initCsrf();
@@ -177,6 +184,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /api/users/me -> 200 even without CSRF when bearer present (according to current config)")
     void update_me_with_bearer_does_not_require_csrf() throws Exception {
         // Arrange
         CsrfBundle csrf = initCsrf();
@@ -196,6 +204,7 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /api/users/me -> 400 when password policy invalid")
     void update_me_invalid_password_policy_returns_400_with_contract_payload() throws Exception {
         // Arrange
         CsrfBundle csrf = initCsrf();
@@ -219,12 +228,12 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andExpect(jsonPath("$.message").isString())
                 .andExpect(jsonPath("$.fieldErrors").isArray());
     }
-
+    // -------------------
     // Helpers (test only)
-
+    // -------------------
     /**
      * Appelle le endpoint public CSRF et retourne token + cookie.
-     * Contrat : {@code GET /api/auth/csrf} -> 204 + Set-Cookie XSRF-TOKEN.
+     * Contrat : GET /api/auth/csrf -> 204 + Set-Cookie XSRF-TOKEN.
      */
     private CsrfBundle initCsrf() throws Exception {
         MvcResult res = mockMvc.perform(get("/api/auth/csrf"))
@@ -271,6 +280,23 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
         return objectMapper.readTree(result.getResponse().getContentAsString());
     }
 
+    /**
+     * Helper dédié aux tests : extrait l'accessToken depuis la réponse JSON du login.
+     * (Évite de dupliquer readJson(...).get("accessToken") dans tous les tests.)
+     */
+    private String accessToken(MvcResult result) throws Exception {
+        // Arrange/Act : lecture du JSON
+        JsonNode json = readJson(result);
+
+        // Assert : le token doit être présent
+        JsonNode token = json.get("accessToken");
+        assertThat(token)
+                .as("accessToken must be present in login response")
+                .isNotNull();
+
+        return token.asText();
+    }
+
     private static String findSetCookieHeader(List<String> setCookieHeaders, String cookieName) {
         return setCookieHeaders.stream()
                 .filter(h -> h.startsWith(cookieName + "="))
@@ -291,5 +317,58 @@ class UserMeIntegrationTest extends AbstractMySqlIntegrationTest {
                 .isNotBlank();
 
         return value;
+    }
+
+    // -------------------
+    // Tests "cas limites"
+    // -------------------
+
+    @Test
+    @DisplayName("PUT /api/users/me -> 400 when email format invalid")
+    void update_me_invalid_email_returns_400_with_contract_payload() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        register(csrf, "invalid-email-user@example.com", "InvalidEmail", "Aa1!aaaa");
+        String accessToken = accessToken(login(csrf, "invalid-email-user@example.com", "Aa1!aaaa"));
+
+        String body = objectMapper.writeValueAsString(new UpdatePayload("not-an-email", null, null));
+
+        // Act
+        var action = mockMvc.perform(put("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+
+        // Assert
+        action.andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.message").value("Validation error"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("email"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/users/me -> 400 when username length > 50")
+    void update_me_username_too_long_returns_400_with_contract_payload() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        register(csrf, "long-username@example.com", "LongUsername", "Aa1!aaaa");
+        String accessToken = accessToken(login(csrf, "long-username@example.com", "Aa1!aaaa"));
+
+        String username51 = "x".repeat(51);
+        String body = objectMapper.writeValueAsString(new UpdatePayload(null, username51, null));
+
+        // Act
+        var action = mockMvc.perform(put("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+
+        // Assert
+        action.andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.message").value("Validation error"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("username"));
     }
 }

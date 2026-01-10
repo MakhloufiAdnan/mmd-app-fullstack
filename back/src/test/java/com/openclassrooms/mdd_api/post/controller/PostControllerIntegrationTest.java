@@ -1,6 +1,7 @@
 package com.openclassrooms.mdd_api.post.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openclassrooms.mdd_api.common.web.response.ApiErrorCodes;
 import com.openclassrooms.mdd_api.post.entity.Post;
 import com.openclassrooms.mdd_api.subscription.entity.Subscription;
 import com.openclassrooms.mdd_api.subscription.repository.SubscriptionRepository;
@@ -134,9 +135,171 @@ class PostControllerIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andExpect(jsonPath("$.comments").isEmpty());
     }
 
-    // ---------------------------
+    // -----------------
+    // Tests cas limites
+    // -----------------
+
+    @Test
+    @DisplayName("POST /api/posts -> 201 when title length == 255 (boundary OK)")
+    void createPost_titleMax255_returns201() throws Exception {
+        // Arrange (prépare un utilisateur abonné + CSRF + payload valide)
+        CsrfBundle csrf = initCsrf();
+
+        User user = seedUser("boundary255@example.com", "boundary255");
+        Topic topic = seedTopic("BoundaryTopic");
+        seedSubscription(user, topic);
+
+        String title255 = "T".repeat(255);
+        String body = objectMapper.writeValueAsString(
+                new CreatePostPayload(topic.getId(), title255, "Content OK")
+        );
+
+        // Act (appel API)
+        var action = mockMvc.perform(post("/api/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token())
+                .with(jwtUser(user.getId())));
+
+        // Assert (création OK)
+        action.andExpect(status().isCreated())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").isNumber());
+    }
+
+    @Test
+    @DisplayName("POST /api/posts -> 400 when title length == 256 (boundary KO)")
+    void createPost_titleTooLong256_returns400() throws Exception {
+        // Arrange (même contexte OK, seul le titre dépasse)
+        CsrfBundle csrf = initCsrf();
+
+        User user = seedUser("boundary256@example.com", "boundary256");
+        Topic topic = seedTopic("BoundaryTopic2");
+        seedSubscription(user, topic);
+
+        String title256 = "T".repeat(256); // dépasse @Size(max=255)
+        String body = objectMapper.writeValueAsString(
+                new CreatePostPayload(topic.getId(), title256, "Content OK")
+        );
+
+        // Act
+        var action = mockMvc.perform(post("/api/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token())
+                .with(jwtUser(user.getId())));
+
+        // Assert (validation contractuelle)
+        action.andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.message").value("Validation error"))
+                // Un seul champ invalide => stable : fieldErrors[0] == title
+                .andExpect(jsonPath("$.fieldErrors.length()").value(1))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("title"))
+                .andExpect(jsonPath("$.fieldErrors[0].message").isString());
+    }
+
+    @Test
+    @DisplayName("POST /api/posts -> 401 when bearer missing (but CSRF provided)")
+    void createPost_withoutBearer_but_withCsrf_returns401() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        Topic topic = seedTopic("Java");
+        String body = objectMapper.writeValueAsString(new CreatePostPayload(topic.getId(), "Hello", "World"));
+
+        // Act
+        var action = mockMvc.perform(post("/api/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token()));
+
+        // Assert
+        action.andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.UNAUTHORIZED))
+                .andExpect(jsonPath("$.message").value("Unauthorized"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+    }
+
+    @Test
+    @DisplayName("POST /api/posts -> 403 when CSRF missing (even with bearer)")
+    void createPost_withBearer_but_withoutCsrf_returns403() throws Exception {
+        // Arrange
+        User user = seedUser("no-csrf@example.com", "noCsrf");
+        Topic topic = seedTopic("Spring");
+        String body = objectMapper.writeValueAsString(new CreatePostPayload(topic.getId(), "Hello", "World"));
+
+        // Act
+        var action = mockMvc.perform(post("/api/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .with(jwtUser(user.getId())));
+
+        // Assert
+        action.andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.FORBIDDEN))
+                .andExpect(jsonPath("$.message").value("Forbidden"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+    }
+
+    @Test
+    @DisplayName("POST /api/posts -> 400 when request body is invalid (validation)")
+    void createPost_invalidBody_returns400_withValidationErrors() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        User user = seedUser("bad-body@example.com", "badBody");
+
+        // Payload invalide: title vide (seul champ en erreur)
+        String body = objectMapper.writeValueAsString(new CreatePostPayload(1L, "   ", "Valid content"));
+
+        // Act
+        var action = mockMvc.perform(post("/api/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token())
+                .with(jwtUser(user.getId())));
+
+        // Assert
+        action.andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.message").value("Validation error"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("title"));
+    }
+
+    @Test
+    @DisplayName("POST /api/posts -> 404 when topic does not exist")
+    void createPost_topicNotFound_returns404() throws Exception {
+        // Arrange
+        CsrfBundle csrf = initCsrf();
+        User user = seedUser("missing-topic@example.com", "missingTopic");
+
+        String body = objectMapper.writeValueAsString(new CreatePostPayload(9_999_999L, "Hello", "World"));
+
+        // Act
+        var action = mockMvc.perform(post("/api/posts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .cookie(csrf.cookie())
+                .header(CSRF_HEADER, csrf.token())
+                .with(jwtUser(user.getId())));
+
+        // Assert
+        action.andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error").value(ApiErrorCodes.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Topic not found"));
+    }
+
+    // -------
     // Helpers
-    // ---------------------------
+    // -------
 
     private RequestPostProcessor jwtUser(Long userId) {
         // subject = userId (string) to match CurrentUserIdExtractor
