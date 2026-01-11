@@ -9,7 +9,6 @@
         "@schematics/angular:component": { "type": "component", "style": "scss" },
         "@schematics/angular:directive": { "type": "directive" },
         "@schematics/angular:service": { "type": "service" },
-
         "@schematics/angular:guard": { "typeSeparator": "." },
         "@schematics/angular:interceptor": { "typeSeparator": "." },
         "@schematics/angular:module": { "typeSeparator": "." },
@@ -36,16 +35,8 @@
           "configurations": {
             "production": {
               "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
+                { "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" },
+                { "type": "anyComponentStyle", "maximumWarning": "4kB", "maximumError": "8kB" }
               ],
               "outputHashing": "all"
             },
@@ -60,12 +51,8 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
-            "production": {
-              "buildTarget": "front:build:production"
-            },
-            "development": {
-              "buildTarget": "front:build:development"
-            }
+            "production": { "buildTarget": "front:build:production" },
+            "development": { "buildTarget": "front:build:development" }
           },
           "defaultConfiguration": "development"
         },
@@ -73,8 +60,9 @@
           "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular-devkit/build-angular:karma",
           "options": {
+            "karmaConfig": "karma.conf.js",
             "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",

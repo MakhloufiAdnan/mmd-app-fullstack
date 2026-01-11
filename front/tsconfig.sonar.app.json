@@ -1,0 +1,14 @@
+/* Sonar-only app tsconfig */
+{
+  "extends": "./tsconfig.sonar.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": []
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts"
+  ]
+}

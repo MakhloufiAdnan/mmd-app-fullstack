@@ -110,6 +110,18 @@ TOKEN_SECRET=dev-secret-change-me
 
 // Activer le remplissage de la BD avec des posts/comments si vide
 SEED_DEMO_DATA=false
+
+# --- SonarQube (dev local) ---
+# Ne JAMAIS committer de token réel.
+# 1) Démarrer SonarQube en local (docker) -> http://localhost:9000
+# 2) Dans l'UI SonarQube : My Account -> Security -> Generate token
+# 3) Copier le token dans front/.env (gitignored) ou exporter SONAR_TOKEN en variable d'env
+SONAR_TOKEN=__VOTRE_SONAR_TOKEN__
+
+# URL de ton serveur SonarQube :
+# - local docker: http://localhost:9000
+# - sinon: https://<ton-domaine-sonarqube>
+SONAR_HOST_URL=http://localhost:9000
 ```
 
 ⚠️ Ne pas committer .env (secrets). Garder uniquement .env.example.

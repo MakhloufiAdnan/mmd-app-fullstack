@@ -1,0 +1,13 @@
+/* Sonar-only spec tsconfig */
+{
+  "extends": "./tsconfig.sonar.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": [
+      "jasmine"
+    ]
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

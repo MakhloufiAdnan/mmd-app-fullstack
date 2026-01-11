@@ -762,3 +762,14 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 .vscode
 package-lock.json
+
+# Sonar
+.scannerwork/
+.sonar/
+
+# Coverage / build outputs
+front/coverage/
+back/target/
+
+# Secrets
+front/.env
