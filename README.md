@@ -1,6 +1,7 @@
 # MDD — mmd-app-fullstack (Monorepo)
 
 MDD est un mini réseau social (MVP) permettant :
+
 - s’inscrire / se connecter (**session persistante** via refresh token HttpOnly),
 - s’abonner à des thèmes,
 - consulter un feed chronologique (**tri asc/desc**),
@@ -32,7 +33,7 @@ L’application consomme l’API via **`/api`** (proxy Angular → back en local
   - lister les thèmes
   - s’abonner / se désabonner
 - Feed :
-  - affichage chronologique des posts liés aux thèmes
+  - affichage chronologique des posts liés aux thèmes abonnés (**tri asc/desc**)
 - Posts :
   - créer un post
   - consulter le détail d’un post
@@ -46,17 +47,16 @@ L’application consomme l’API via **`/api`** (proxy Angular → back en local
 
 ## Stack & versions
 
-### Front
-- Angular (standalone)
-- Angular Material
-- Tests : Karma + Jasmine (+ Istanbul coverage)
+- Front : Angular (standalone) + Angular Material
+- Back : Java 21 + Spring Boot 3.x
+- DB : MySQL (Docker)
+- Tests : Front (Karma/Jasmine), Back (JUnit 5 / MockMvc / Testcontainers)
+- Coverage : Istanbul (front), JaCoCo (back)
 
-### Back
-- Java 21
-- Spring Boot 3.x
-- MySQL (Docker)
-- Tests : JUnit 5 + Spring Boot Test + MockMvc + Testcontainers
-- Couverture : JaCoCo
+> Détails d’installation, scripts, tests et coverage :
+>
+> - Front : `front/README.md`
+> - Back : `back/README.md`
 
 ---
 
@@ -79,7 +79,8 @@ L’application consomme l’API via **`/api`** (proxy Angular → back en local
 
 ## Quickstart (local)
 
-### Arborescence :
+### Arborescence
+
 ```text
 mmd-app-fullstack/
 ├── front/
@@ -87,89 +88,49 @@ mmd-app-fullstack/
 └── back/
 ```
 
-1) Démarrer la DB (Docker)
-Dans back/, créer un fichier .env à partir de .env.example 
-```
+1. Démarrer la DB (MySQL)
+   Créer back/.env (non versionné), puis :
+
+```bash
 cd back
-cp .env.example .env
-```
-Exemple .env.example (dev uniquement)
-```
-DB_NAME=mdd
-DB_USER=mdd
-DB_PASSWORD=mdd
-DB_ROOT_PASSWORD=root_password
-
-// Back en local + MySQL en docker avec port 3307
-DB_HOST=localhost
-DB_PORT=3307
-
-JWT_EXPIRATION_MS=900000
-REFRESH_TOKEN_EXPIRATION_MS=1209600000
-TOKEN_SECRET=dev-secret-change-me
-
-// Activer le remplissage de la BD avec des posts/comments si vide
-SEED_DEMO_DATA=false
-
-# --- SonarQube (dev local) ---
-# Ne JAMAIS committer de token réel.
-# 1) Démarrer SonarQube en local (docker) -> http://localhost:9000
-# 2) Dans l'UI SonarQube : My Account -> Security -> Generate token
-# 3) Copier le token dans front/.env (gitignored) ou exporter SONAR_TOKEN en variable d'env
-SONAR_TOKEN=__VOTRE_SONAR_TOKEN__
-
-# URL de ton serveur SonarQube :
-# - local docker: http://localhost:9000
-# - sinon: https://<ton-domaine-sonarqube>
-SONAR_HOST_URL=http://localhost:9000
-```
-
-⚠️ Ne pas committer .env (secrets). Garder uniquement .env.example.
-
-### Démarrer MySQL :
 docker compose up -d
-
-2) Lancer le back
-cd back
+```
+2. Lancer le back
+```bash
 ./mvnw spring-boot:run
-
-3) Lancer le front
+cd..
+```
+3. Lancer le front
+```bash
 cd front
 npm install
 npm start
-Ouvrir : http://localhost:4200
+```
+## SonarQube (mono-repo)
 
-## Tests & couverture
+L’analyse Sonar se lance depuis le front :
+```bash
+npm run sonar:local
+```
+Le script run-sonar.ps1 est à la racine du repo.
 
-### Back
-cd back
-./mvnw test
+## Décisions & écarts par rapport aux specs
 
-### Rapport JaCoCo :
-back/target/site/jacoco/index.html
+Abonnement requis
 
-### Front
-cd front
-ng test --code-coverage
+- Créer un post : l’utilisateur doit être abonné au topic choisi
+- Commenter : l’utilisateur doit être abonné au topic du post
 
-### Rapport coverage (Angular) :
-front/coverage/**/index.html
+Ces règles ne sont pas explicitement écrites dans les specs MVP, mais elles sont cohérentes avec le feed (topics abonnés) et évitent des contenus hors-sujet.
 
-### Décisions & écarts par rapport aux specs
+CSRF
 
-* Abonnement requis (règle ajoutée côté back) :
-
-> Créer un post : l’utilisateur doit être abonné au topic choisi
-> Commenter : l’utilisateur doit être abonné au topic du post
-
-> Ces règles ne sont pas explicitement écrites dans les specs MVP, mais elles sont cohérentes avec le feed (topics abonnés) et évite des contenus hors-sujet.
-
-* CSRF
-CSRF utilisé principalement pour les flux basés cookie (ex: refresh/logout).
+CSRF utilisé principalement pour les flux basés cookie (ex : refresh/logout).
 Les appels protégés en Bearer ne nécessitent pas forcément CSRF (comportement validé par tests).
 
-* CORS (dev)
-Le front utilise un proxy Angular :
-> le navigateur appelle http://localhost:4200/api/* (same-origin),
+CORS (dev)
 
-> le dev server proxyfie vers le back → pas de CORS requis en local.
+Le front utilise un proxy Angular :
+
+- le navigateur appelle http://localhost:4200/api/\* (same-origin),
+- le dev server proxyfie vers le back → pas de CORS requis en local.
