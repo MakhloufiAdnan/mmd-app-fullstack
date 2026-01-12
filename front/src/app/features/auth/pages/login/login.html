@@ -12,6 +12,7 @@
       <mat-form-field appearance="outline">
         <input
           matInput
+          data-testid="login-identifier"
           id="identifier"
           type="text"
           name="username"
@@ -37,6 +38,7 @@
       <mat-form-field appearance="outline">
         <input
           matInput
+          data-testid="login-password"
           id="loginPassword"
           type="password"
           name="password"
@@ -55,6 +57,7 @@
     </div>
 
     <button
+      data-testid="login-submit"
       class="auth-submit"
       mat-flat-button
       color="primary"

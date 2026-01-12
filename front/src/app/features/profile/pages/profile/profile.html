@@ -18,7 +18,7 @@
           autocomplete="username"
         />
 
-        @if (form.controls.username.hasError('required')) {
+        @if (form.controls.username.touched && form.controls.username.hasError('required')) {
           <mat-error>Nom d'utilisateur requis.</mat-error>
         } @else if (fieldErrors()?.username?.length) {
           <mat-error>{{ fieldErrors()!.username![0] }}</mat-error>
@@ -49,6 +49,7 @@
         <mat-label>Nouveau mot de passe (optionnel)</mat-label>
         <input
           matInput
+          data-testid="profile-password"
           type="password"
           name="new-password"
           formControlName="password"
@@ -70,6 +71,7 @@
 
       <div class="actions">
         <button
+          data-testid="profile-save"
           class="mdd-btn"
           mat-flat-button
           color="primary"
@@ -106,6 +108,7 @@
               <button
                 class="mdd-btn"
                 mat-flat-button
+                [attr.data-testid]="'profile-unsubscribe-' + t.id"
                 color="primary"
                 type="button"
                 (click)="unsubscribe(t.id)"

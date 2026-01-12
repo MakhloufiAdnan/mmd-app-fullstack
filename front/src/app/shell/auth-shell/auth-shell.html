@@ -3,7 +3,10 @@
   <mat-sidenav #drawer class="drawer" mode="over" position="end">
     <div class="drawer-content">
       <nav class="drawer-nav" aria-label="Menu mobile">
-        <button type="button" class="drawer-link drawer-logout" (click)="logout(drawer)">
+        <button 
+        data-testid="nav-logout"
+        type="button" 
+        class="drawer-link drawer-logout" (click)="logout(drawer)">
           Se déconnecter
         </button>
 
@@ -32,8 +35,13 @@
       <span class="spacer"></span>
 
       <!-- Desktop nav -->
-      <nav class="desktop-nav" aria-label="Navigation principale">
-        <button type="button" class="desktop-link desktop-logout" (click)="logout(drawer)">
+      <nav class="desktop-nav"        aria-label="Navigation principale">
+        <button 
+          data-testid="nav-logout"
+          type="button"
+          class="desktop-link desktop-logout"
+          (click)="logout(drawer)"
+        >
           Se déconnecter
         </button>
 
@@ -72,6 +80,7 @@
 
       <!-- Burger mobile (recouvert par le drawer quand ouvert) -->
       <button
+        data-testid="nav-burger"
         type="button"
         class="burger-btn"
         (click)="drawer.toggle()"

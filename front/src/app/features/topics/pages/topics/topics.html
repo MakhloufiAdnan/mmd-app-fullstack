@@ -1,39 +1,43 @@
 <mat-card class="page">
-  @if (vm$ | async; as vm) { @if (vm.loading) {
-  <div class="center">
-    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-  </div>
-  } @else { @if (vm.error) {
-  <p class="error">{{ vm.error }}</p>
-  } @if (vm.topics.length === 0 && !vm.error) {
-  <p>Aucun thème disponible.</p>
-  } @else {
-  <div class="topics">
-    @for (topic of vm.topics; track trackById($index, topic)) {
-    <mat-card class="topic-card mdd-card">
-      <div class="topic-title">{{ topic.name }}</div>
-
-      <p class="topic-description">
-        <span class="topic-description-label">Description:</span>
-        {{ topic.description }}
-      </p>
-
-      <div class="topic-actions">
-        <button
-          class="mdd-btn"
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="onSubscribe(topic.id)"
-          [disabled]="topic.subscribed || vm.pendingIds.has(topic.id)"
-        >
-          @if (vm.pendingIds.has(topic.id)) {
-          <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
-          } @if (topic.subscribed) { Déjà abonné } @else { S'abonner }
-        </button>
+  @if (vm$ | async; as vm) { 
+    @if (vm.loading) {
+      <div class="center">
+        <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
       </div>
-    </mat-card>
-    }
-  </div>
-  } } }
+  }@else { 
+    @if (vm.error) {
+      <p class="error">{{ vm.error }}</p>
+    } @if (vm.topics.length === 0 && !vm.error) {
+      <p>Aucun thème disponible.</p>
+    } @else {
+      <div class="topics">
+      @for (topic of vm.topics; track trackById($index, topic)) {
+        <mat-card class="topic-card mdd-card">
+          <div class="topic-title">{{ topic.name }}</div>
+          <p class="topic-description">
+            <span class="topic-description-label">Description:</span>
+            {{ topic.description }}
+          </p>
+
+          <div class="topic-actions">
+            <button
+              class="mdd-btn"
+              mat-flat-button
+              [attr.data-testid]="'topic-subscribe-' + topic.id"
+              color="primary"
+              type="button"
+              (click)="onSubscribe(topic.id)"
+              [disabled]="topic.subscribed || vm.pendingIds.has(topic.id)"
+            >
+              @if (vm.pendingIds.has(topic.id)) {
+              <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+              } @if (topic.subscribed) { Déjà abonné } @else { S'abonner }
+            </button>
+          </div>
+        </mat-card>
+        }
+      </div>
+      } 
+    } 
+  }
 </mat-card>

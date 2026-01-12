@@ -27,6 +27,7 @@
         <!-- Topic -->
         <mat-form-field class="field" appearance="outline">
           <mat-select
+            data-testid="post-topic-select"
             formControlName="topicId"
             placeholder="Sélectionner un thème"
             aria-label="Sélectionner un thème"
@@ -52,6 +53,7 @@
         <mat-form-field class="field" appearance="outline">
           <input
             matInput
+            data-testid="post-title"
             formControlName="title"
             placeholder="Titre de l'article"
             aria-label="Titre de l'article"
@@ -70,6 +72,7 @@
         <!-- Content -->
         <mat-form-field class="field" appearance="outline">
           <textarea
+            data-testid="post-content"
             matInput
             rows="8"
             formControlName="content"
@@ -89,6 +92,7 @@
 
         <button
           mat-flat-button
+          data-testid="post-submit"
           color="primary"
           type="submit"
           class="mdd-btn submit"

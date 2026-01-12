@@ -64,6 +64,7 @@
             <mat-form-field appearance="outline" class="comment-field">
               <textarea
                 matInput
+                data-testid="comment-content"
                 rows="4"
                 formControlName="content"
                 placeholder="Écrivez ici votre commentaire"
@@ -74,6 +75,7 @@
             </mat-form-field>
 
             <button
+              data-testid="comment-submit"
               class="send"
               type="submit"
               [disabled]="commentForm.invalid || submitting()"
