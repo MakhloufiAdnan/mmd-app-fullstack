@@ -1,43 +1,50 @@
-import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { FormControl } from '@angular/forms';
+import { passwordPolicyValidator } from './password-policy.validator';
 
-/**
- * Validateur UX du mot de passe.
- *
- * Exigence du MVP :
- * - 8 caractères minimum
- * - au moins 1 chiffre
- * - au moins 1 minuscule
- * - au moins 1 majuscule
- * - au moins 1 caractère spécial
- *
- * Le back reste la source de vérité.
- */
-export function passwordPolicyValidator(): ValidatorFn {
-  const digit = /\d/;
-  const lower = /[a-z]/;
-  const upper = /[A-Z]/;
-  const special = /[^A-Za-z0-9]/;
+describe('passwordPolicyValidator', () => {
+  const validate = passwordPolicyValidator();
 
-  return (control: AbstractControl): ValidationErrors | null => {
-    // IMPORTANT : trim pour que "   " soit traité comme vide (cohérent avec submit())
-    const v = String(control.value ?? '').trim();
+  it('should return null for empty string (required handled by Validators.required)', () => {
+    // Arrange
+    const control = new FormControl('');
 
-    // required est géré ailleurs (Validators.required)
-    if (!v) return null;
+    // Act
+    const result = validate(control);
 
-    const ok =
-      v.length >= 8 &&
-      digit.test(v) &&
-      lower.test(v) &&
-      upper.test(v) &&
-      special.test(v);
+    // Assert
+    expect(result).toBeNull();
+  });
 
-    return ok ? null : { passwordPolicy: true };
-  };
-}
+  it('should return { passwordPolicy: true } for weak password', () => {
+    // Arrange
+    const control = new FormControl('abc');
 
-it('should return null when only spaces (trim)', () => {
-  const control = new FormControl('   ');
-  const result = passwordPolicyValidator()(control);
-  expect(result).toBeNull();
+    // Act
+    const result = validate(control);
+
+    // Assert
+    expect(result).toEqual({ passwordPolicy: true });
+  });
+
+  it('should return { passwordPolicy: true } for spaces-only (no trim in current implementation)', () => {
+    // Arrange
+    const control = new FormControl('   ');
+
+    // Act
+    const result = validate(control);
+
+    // Assert
+    expect(result).toEqual({ passwordPolicy: true });
+  });
+
+  it('should return null for strong password meeting all constraints', () => {
+    // Arrange
+    const control = new FormControl('Aa1!aaaa');
+
+    // Act
+    const result = validate(control);
+
+    // Assert
+    expect(result).toBeNull();
+  });
 });

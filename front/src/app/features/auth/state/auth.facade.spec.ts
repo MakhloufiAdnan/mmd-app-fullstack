@@ -1,25 +1,26 @@
 import { TestBed } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 
 import { AuthFacade } from './auth.facade';
 import { AuthStore } from './auth.store';
 import { AuthApiService } from '../services/auth-api.service';
 import type { TokenResponse } from '../interfaces/auth.models';
+import { buildValidSecret } from '@core/testing/test-secrets';
+
+/**
+ * Helper top-level pour créer une réponse TokenResponse.
+ */
+function tokenResponse(accessToken: string): TokenResponse {
+  return { accessToken, tokenType: 'Bearer', expiresInSeconds: 900 };
+}
 
 describe('AuthFacade', () => {
   let facade: AuthFacade;
   let store: AuthStore;
-
   let api: jasmine.SpyObj<AuthApiService>;
 
-  // Helper : réponse token conforme au contrat TypeScript
-  const tokenResponse = (accessToken: string): TokenResponse => ({
-    accessToken,
-    tokenType: 'Bearer',
-    expiresInSeconds: 900, // valeur arbitraire ok pour un test
-  });
-
   beforeEach(() => {
+    // Arrange
     api = jasmine.createSpyObj<AuthApiService>('AuthApiService', [
       'csrf',
       'login',
@@ -41,8 +42,10 @@ describe('AuthFacade', () => {
     api.csrf.and.returnValue(of(void 0));
     api.login.and.returnValue(of(tokenResponse('jwt')));
 
+    const secret = buildValidSecret();
+
     // Act
-    facade.login({ identifier: 'bob', password: 'Aa1!aaaa' }).subscribe({
+    facade.login({ identifier: 'bob', password: secret }).subscribe({
       next: (res) => {
         // Assert
         expect(res.accessToken).toBe('jwt');
@@ -60,10 +63,10 @@ describe('AuthFacade', () => {
     store.setAccessToken('jwt');
     api.logout.and.returnValue(throwError(() => new Error('boom')));
 
-    // Act (throwError + catchError(of()) => completions sync)
+    // Act
     facade.logout().subscribe();
 
-    // Assert (finalize a déjà tourné après la fin de subscribe)
+    // Assert
     expect(store.accessToken()).toBeNull();
   });
 
@@ -78,10 +81,10 @@ describe('AuthFacade', () => {
     facade.refreshAccessTokenOnce().subscribe((v) => results.push(v));
     facade.refreshAccessTokenOnce().subscribe((v) => results.push(v));
 
-    // Assert (only 1 refresh call)
+    // Assert (1 seul refresh)
     expect(api.refresh).toHaveBeenCalledTimes(1);
 
-    // Finish refresh
+    // Act (résolution)
     refresh$.next(tokenResponse('new-jwt'));
     refresh$.complete();
 
@@ -91,5 +94,22 @@ describe('AuthFacade', () => {
       expect(store.accessToken()).toBe('new-jwt');
       done();
     }, 0);
+  });
+
+  it('bootstrap$() should call csrf then refresh, set token, and mark initialized', async () => {
+    // Arrange
+    api.csrf.and.returnValue(of(void 0));
+    api.refresh.and.returnValue(of(tokenResponse('boot-jwt')));
+
+    spyOn(store, 'markInitialized').and.callThrough();
+
+    // Act
+    await firstValueFrom(facade.bootstrap$());
+
+    // Assert
+    expect(api.csrf).toHaveBeenCalled();
+    expect(api.refresh).toHaveBeenCalled();
+    expect(store.accessToken()).toBe('boot-jwt');
+    expect(store.markInitialized).toHaveBeenCalled();
   });
 });
