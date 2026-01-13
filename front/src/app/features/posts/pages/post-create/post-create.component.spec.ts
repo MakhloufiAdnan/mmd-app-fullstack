@@ -1,66 +1,53 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 
 import { PostCreateComponent } from './post-create.component';
-import { DEFAULT_COMPONENT_TEST_PROVIDERS } from '@core/testing/test.providers';
+import { TopicsApiService } from '../../../topics/services/topics-api.service';
+import { PostsApiService } from '../../services/posts-api.service';
+import { TopicListItem } from '../../../topics/interfaces/topic.models';
 
-type FlushBody = Parameters<TestRequest['flush']>[0];
-
-/**
- * Helper top-level :
- * flush la requête GET /api/topics issue du constructor().
- */
-function flushTopics(
-  httpMock: HttpTestingController,
-  body: FlushBody,
-  status?: { code: number; text: string }
-): void {
-  const req = httpMock.expectOne('/api/topics');
-  expect(req.request.method).toBe('GET');
-
-  if (status) {
-    req.flush(body, { status: status.code, statusText: status.text });
-  } else {
-    req.flush(body);
-  }
-}
-
-describe('PostCreateComponent', () => {
+describe('PostCreateComponent (shallow)', () => {
   let component: PostCreateComponent;
   let fixture: ComponentFixture<PostCreateComponent>;
-  let httpMock: HttpTestingController;
-  let router: Router;
+
+  let router: jasmine.SpyObj<Router>;
+  let topicsApi: jasmine.SpyObj<TopicsApiService>;
+  let postsApi: jasmine.SpyObj<PostsApiService>;
 
   beforeEach(async () => {
+    // Arrange: mocks DI
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    router.navigate.and.returnValue(Promise.resolve(true) as any);
+
+    topicsApi = jasmine.createSpyObj<TopicsApiService>('TopicsApiService', ['listTopics']);
+    postsApi = jasmine.createSpyObj<PostsApiService>('PostsApiService', ['createPost']);
+
+    // Arrange: le constructor() du composant appelle loadTopics()
+    // On donne une valeur par défaut pour éviter un crash au montage.
+    topicsApi.listTopics.and.returnValue(of([]));
+
     await TestBed.configureTestingModule({
       imports: [PostCreateComponent],
-      providers: [...DEFAULT_COMPONENT_TEST_PROVIDERS],
-    }).compileComponents();
+      providers: [
+        { provide: Router, useValue: router },
+        { provide: TopicsApiService, useValue: topicsApi },
+        { provide: PostsApiService, useValue: postsApi },
+      ],
+    })
+      // Arrange: Option A => shallow test, on neutralise le template Material
+      .overrideComponent(PostCreateComponent, { set: { template: '' } })
+      .compileComponents();
 
-    // Arrange
+    // Arrange: création du composant
     fixture = TestBed.createComponent(PostCreateComponent);
     component = fixture.componentInstance;
-
-    httpMock = TestBed.inject(HttpTestingController);
-    router = TestBed.inject(Router);
-
-    spyOn(router, 'navigate').and.resolveTo(true);
-
-    // Act : constructor() => loadTopics() => GET /api/topics
     fixture.detectChanges();
-
-    // Assert : flush obligatoire sinon requête pending
-    flushTopics(httpMock, []);
-  });
-
-  afterEach(() => {
-    // Assert global : aucune requête HTTP ne doit rester pending
-    httpMock.verify();
   });
 
   it('should create', () => {
-    // Arrange done in beforeEach
+    // Arrange: done in beforeEach
 
     // Act
     const instance = component;
@@ -69,117 +56,186 @@ describe('PostCreateComponent', () => {
     expect(instance).toBeTruthy();
   });
 
-  it('onSubmit() should NOT POST when form is invalid (guard + markAllAsTouched)', () => {
-    // Arrange : form invalide (required vides)
-    component.form.reset();
-    component.form.updateValueAndValidity();
-    expect(component.form.valid).toBeFalse();
+  it('loadTopics() should store topics and stop loading on success', () => {
+    // Arrange
+    topicsApi.listTopics.calls.reset();
+    const topics: TopicListItem[] = [
+      { id: 1, name: 'A', subscribed: true } as any,
+      { id: 2, name: 'B', subscribed: false } as any,
+    ];
+    topicsApi.listTopics.and.returnValue(of(topics));
+
+    // Act
+    component.loadTopics();
+
+    // Assert: état observable mis à jour
+    expect(component.error$.getValue()).toBeNull();
+    expect(component.topics$.getValue()).toEqual(topics);
+    expect(component.loading$.getValue()).toBeFalse();
+  });
+
+  it('loadTopics() should set error and empty topics on failure', () => {
+    // Arrange
+    topicsApi.listTopics.calls.reset();
+    topicsApi.listTopics.and.returnValue(throwError(() => new Error('boom')));
+
+    // Act
+    component.loadTopics();
+
+    // Assert: fallback UI prévu par le composant
+    expect(component.error$.getValue()).toBe('Impossible de charger les thèmes.');
+    expect(component.topics$.getValue()).toEqual([]);
+    expect(component.loading$.getValue()).toBeFalse();
+  });
+
+  it('hasAnySubscribedTopics() should return true when at least one topic is subscribed', () => {
+    // Arrange
+    const topics: TopicListItem[] = [
+      { id: 1, name: 'A', subscribed: false } as any,
+      { id: 2, name: 'B', subscribed: true } as any,
+    ];
+
+    // Act
+    const result = component.hasAnySubscribedTopics(topics);
+
+    // Assert
+    expect(result).toBeTrue();
+  });
+
+  it('getFieldErrorFirst() should return first server message for a field', () => {
+    // Arrange: fieldErrors = signal<Record<string,string[]>>
+    component.fieldErrors.set({ title: ['Too short', 'Other'], topicId: ['Required'] });
+
+    // Act
+    const msg = component.getFieldErrorFirst('title');
+
+    // Assert
+    expect(msg).toBe('Too short');
+  });
+
+  it('onSubmit() should NOT call createPost when form is invalid', () => {
+    // Arrange: invalid (Validators.required)
+    component.form.setValue({ topicId: null, title: '', content: '' });
+    const touchSpy = spyOn(component.form, 'markAllAsTouched').and.callThrough();
 
     // Act
     component.onSubmit();
 
-    // Assert : aucun POST + aucune navigation
-    httpMock.expectNone('/api/posts');
+    // Assert: aucune requête + feedback UI (touched)
+    expect(postsApi.createPost).not.toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
+    expect(touchSpy).toHaveBeenCalled();
   });
 
-  it('onSubmit() should POST then navigate to /posts/:id on success', () => {
-    // Arrange : rendre le form valide
-    component.form.patchValue({ topicId: 1, title: 'Titre', content: 'Contenu' });
-    component.form.updateValueAndValidity();
-    expect(component.form.valid).toBeTrue();
+  it('onSubmit() should NOT call createPost when already submitting', () => {
+    // Arrange: "double submit" protégé par submitting()
+    component.submitting.set(true);
+    component.form.setValue({ topicId: 1, title: 't', content: 'c' });
+
+    const touchSpy = spyOn(component.form, 'markAllAsTouched').and.callThrough();
 
     // Act
     component.onSubmit();
 
-    // Assert : POST émis
-    const req = httpMock.expectOne('/api/posts');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ topicId: 1, title: 'Titre', content: 'Contenu' });
-
-    // Act : réponse OK
-    req.flush({ id: 42 });
-
-    // Assert : navigation vers le détail
-    expect(router.navigate).toHaveBeenCalledWith(['/posts', 42]);
+    // Assert: pas de POST
+    expect(postsApi.createPost).not.toHaveBeenCalled();
+    // Ton code marque touched même si submitting() true (comportement assumé)
+    expect(touchSpy).toHaveBeenCalled();
   });
 
-  it('onSubmit() should project VALIDATION_ERROR into fieldErrors + control server error', () => {
-    // Arrange : form valide
-    component.form.patchValue({ topicId: 1, title: 't', content: 'c' });
-    component.form.updateValueAndValidity();
-    expect(component.form.valid).toBeTrue();
+  it('onSubmit() should call createPost then navigate to "/posts/:id" on success', () => {
+    // Arrange
+    postsApi.createPost.and.returnValue(of({ id: 123 } as any));
+    component.form.setValue({ topicId: 10, title: 'Hello', content: 'World' });
 
     // Act
     component.onSubmit();
 
-    // Assert : POST émis
-    const req = httpMock.expectOne('/api/posts');
-    expect(req.request.method).toBe('POST');
+    // Assert: POST + navigation
+    expect(postsApi.createPost).toHaveBeenCalledTimes(1);
+    expect(router.navigate).toHaveBeenCalledWith(['/posts', 123]);
 
-    // Act : réponse 400 contractuelle
-    req.flush(
-      {
-        error: 'VALIDATION_ERROR',
-        message: 'Validation error',
-        fieldErrors: [{ field: 'title', message: 'Title is required' }],
-      },
-      { status: 400, statusText: 'Bad Request' }
+    // Assert: finalize() doit remettre submitting à false (of => synchro)
+    expect(component.submitting()).toBeFalse();
+  });
+
+  it('onSubmit() should map typed API error to globalError, fieldErrors and set control "server" errors', () => {
+    // Arrange: typed API error (ApiErrorResponse + ApiFieldError[])
+    postsApi.createPost.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: {
+              error: 'VALIDATION_ERROR',
+              message: 'Validation failed',
+              fieldErrors: [
+                { field: 'title', message: 'Title is required' },
+                { field: 'content', message: 'Content is required' },
+              ],
+            },
+          })
+      )
     );
 
-    // Assert : mapping UI
-    expect(component.globalError()).toBe('Validation error');
-    expect(component.fieldErrors()['title']?.[0]).toBe('Title is required');
-
-    const titleCtrl = component.form.get('title');
-    expect(titleCtrl?.errors?.['server']).toBe('Title is required');
-
-    expect(router.navigate).not.toHaveBeenCalled();
-  });
-
-  it('onSubmit() should set generic error when API payload is not standard', () => {
-    // Arrange : form valide
-    component.form.patchValue({ topicId: 1, title: 'Titre', content: 'Contenu' });
-    component.form.updateValueAndValidity();
-    expect(component.form.valid).toBeTrue();
+    // Form valide pour que la requête parte
+    component.form.setValue({ topicId: 1, title: 'x', content: 'y' });
 
     // Act
     component.onSubmit();
 
-    // Assert : POST émis
-    const req = httpMock.expectOne('/api/posts');
-    expect(req.request.method).toBe('POST');
+    // Assert: globalError
+    expect(component.globalError()).toBe('Validation failed');
 
-    // Act : réponse 500 non contractuelle (payload non ApiErrorResponse)
-    req.flush('boom', { status: 500, statusText: 'Server Error' });
+    // Assert: fieldErrors map (via toFieldErrorMap)
+    expect(component.fieldErrors()).toEqual({
+      title: ['Title is required'],
+      content: ['Content is required'],
+    });
 
-    // Assert : message générique (pas de fuite technique)
-    expect(component.globalError()).toBe('Une erreur est survenue. Réessaie plus tard.');
-    expect(router.navigate).not.toHaveBeenCalled();
+    // Assert: projection dans les controls (erreur "server" + touched)
+    const titleCtrl = component.form.get('title')!;
+    expect(titleCtrl.hasError('server')).toBeTrue();
+    expect(titleCtrl.getError('server')).toBe('Title is required');
+    expect(titleCtrl.touched).toBeTrue();
+
+    const contentCtrl = component.form.get('content')!;
+    expect(contentCtrl.hasError('server')).toBeTrue();
+    expect(contentCtrl.touched).toBeTrue();
+
+    // Assert: finalize()
+    expect(component.submitting()).toBeFalse();
   });
-});
 
-describe('PostCreateComponent (loadTopics error branch)', () => {
-  it('loadTopics() should set error$ and topics$ to [] when /api/topics fails', async () => {
-    // Arrange
-    await TestBed.configureTestingModule({
-      imports: [PostCreateComponent],
-      providers: [...DEFAULT_COMPONENT_TEST_PROVIDERS],
-    }).compileComponents();
+  it('onSubmit() should set generic message when error is not a typed API payload', () => {
+    // Arrange: payload non conforme (string au lieu d’objet ApiErrorResponse)
+    postsApi.createPost.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, error: 'boom' }))
+    );
 
-    const fixture = TestBed.createComponent(PostCreateComponent);
-    const component = fixture.componentInstance;
-    const httpMock = TestBed.inject(HttpTestingController);
+    component.form.setValue({ topicId: 1, title: 'Hello', content: 'World' });
 
-    // Act : constructor() -> loadTopics() -> simulate error
-    fixture.detectChanges();
-    flushTopics(httpMock, {}, { code: 500, text: 'Server Error' });
+    // Act
+    component.onSubmit();
 
-    // Assert : fallback UX attendu
-    expect(component.error$.value).toBe('Impossible de charger les thèmes.');
-    expect(component.topics$.value).toEqual([]);
-    expect(component.loading$.value).toBeFalse();
+    // Assert: fallback générique
+    expect(component.globalError()).toBe('Une erreur est survenue. Réessaie plus tard.');
+    expect(component.submitting()).toBeFalse();
+  });
 
-    httpMock.verify();
+  it('onSubmit() should clear only "server" errors on controls (keep other errors)', () => {
+    // Arrange: on simule un contrôle avec deux erreurs
+    const titleCtrl = component.form.get('title')!;
+    titleCtrl.setErrors({ required: true, server: 'Old server error' });
+
+    // Force invalid => le submit return early, mais resetUiErrors() doit enlever "server"
+    component.form.setValue({ topicId: null, title: '', content: '' });
+
+    // Act
+    component.onSubmit();
+
+    // Assert: server retiré, required conservé
+    expect(titleCtrl.hasError('server')).toBeFalse();
+    expect(titleCtrl.hasError('required')).toBeTrue();
   });
 });

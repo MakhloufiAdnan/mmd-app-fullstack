@@ -1,5 +1,4 @@
 import { AsyncPipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,7 +18,17 @@ import { TopicListItem } from '../../../topics/interfaces/topic.models';
 import { PostsApiService } from '../../services/posts-api.service';
 import { CreatePostRequest } from '../../interfaces/post.models';
 
-import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
+/**
+ * ✅ Helper factorisé :
+ * - reset des erreurs UI (global + map champ) + suppression erreur "server" sur les controls
+ * - mapping HttpErrorResponse(API typée) -> globalError + fieldErrors + projection dans les controls
+ * - extraction "premier message" par champ
+ */
+import {
+  firstServerError,
+  handleApiErrorToUi,
+  resetUiErrors,
+} from '@shared/forms/server-form-errors';
 
 @Component({
   selector: 'app-post-create',
@@ -44,13 +53,19 @@ export class PostCreateComponent {
   private readonly topicsApi = inject(TopicsApiService);
   private readonly postsApi = inject(PostsApiService);
 
+  /**
+   * État "data loading" pour la liste de topics.
+   * On garde BehaviorSubject car c’est pratique à consommer en AsyncPipe.
+   */
   readonly topics$ = new BehaviorSubject<TopicListItem[]>([]);
   readonly loading$ = new BehaviorSubject<boolean>(true);
   readonly error$ = new BehaviorSubject<string | null>(null);
 
   /**
-   * UI errors 
-   * - fieldErrors: map champ -> liste de messages
+   * Erreurs UI :
+   * - submitting : évite double-submit
+   * - globalError : message en haut (ex: "Validation failed")
+   * - fieldErrors : map champ -> messages (ex: { title: ["required"] })
    */
   readonly submitting = signal(false);
   readonly globalError = signal<string | null>(null);
@@ -59,7 +74,7 @@ export class PostCreateComponent {
   /**
    * Form :
    * - topicId nullable au départ (aucun choix)
-   * - title/content NON NULLABLES => évite "string | null" au payload
+   * - title/content NON NULLABLES => payload sans "string | null"
    */
   readonly form = this.fb.nonNullable.group({
     topicId: this.fb.control<number | null>(null, { validators: [Validators.required] }),
@@ -73,19 +88,26 @@ export class PostCreateComponent {
 
   /**
    * Calcule si l'utilisateur a au moins un thème abonné.
+   * (utilitaire UI)
    */
   hasAnySubscribedTopics(topics: TopicListItem[]): boolean {
     return topics.some((t) => t.subscribed);
   }
 
   /**
-   * Affiche le 1er message serveur pour un champ.
+   * Renvoie le 1er message serveur pour un champ.
+   * ✅ factorisé via helper (évite duplication + style cohérent)
    */
   getFieldErrorFirst(field: 'topicId' | 'title' | 'content'): string | null {
-    const msgs = this.fieldErrors()[field];
-    return msgs?.[0] ?? null;
+    return firstServerError(this.fieldErrors(), field);
   }
 
+  /**
+   * Charge la liste de topics :
+   * - loading true au début
+   * - topics$ alimenté sur succès
+   * - fallback user-friendly sur erreur
+   */
   loadTopics(): void {
     this.loading$.next(true);
     this.error$.next(null);
@@ -105,19 +127,27 @@ export class PostCreateComponent {
       .subscribe();
   }
 
+  /**
+   * Submit création de post :
+   * - reset erreurs UI + nettoyage erreurs "server" dans les controls
+   * - validation (invalid / submitting)
+   * - call API
+   * - navigation vers /posts/:id sur succès
+   */
   onSubmit(): void {
-    this.globalError.set(null);
-    this.fieldErrors.set({});
-    this.clearServerErrorsOnControls();
+    // ✅ factorisé : reset + clear server errors
+    resetUiErrors(this.globalError, this.fieldErrors, this.form);
 
+    // Guard : invalide OU déjà en soumission
     if (this.form.invalid || this.submitting()) {
       this.form.markAllAsTouched();
       return;
     }
 
+    // Construction payload typé
     const v = this.form.getRawValue();
     const payload: CreatePostRequest = {
-      topicId: v.topicId!, // ok car Validators.required + check form.invalid
+      topicId: v.topicId!, // safe car required + form.valid déjà check
       title: v.title,
       content: v.content,
     };
@@ -132,59 +162,23 @@ export class PostCreateComponent {
       )
       .subscribe({
         next: (res) => {
-          // router.navigate retourne une Promise => ignore le résultat
+          // navigate retourne une Promise : on ignore le résultat
           void this.router.navigate(['/posts', res.id]);
         },
         error: (err) => this.handleApiError(err),
       });
   }
 
+  /**
+   * Handler d’erreur :
+   * - si erreur API typée => globalError + fieldErrors + projection dans les controls
+   * - sinon => message générique
+   *
+   * ✅ factorisé via helper
+   */
   private handleApiError(err: unknown): void {
-    if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
-      this.globalError.set(err.error.message);
-
-      // Le core renvoie Record<string, string[]>
-      const map = toFieldErrorMap(err.error.fieldErrors);
-      this.fieldErrors.set(map);
-      this.applyServerErrorsToControls(map);
-
-      return;
-    }
-
-    this.globalError.set('Une erreur est survenue. Réessaie plus tard.');
-  }
-
-  /**
-   * Projette les erreurs serveur dans les contrôles pour:
-   * - afficher sous champ
-   * - marquer touched (sinon mat-error n’apparait pas)
-   */
-  private applyServerErrorsToControls(map: Record<string, string[]>): void {
-    for (const [field, messages] of Object.entries(map)) {
-      const ctrl = this.form.get(field);
-      if (!ctrl) continue;
-
-      const msg = messages[0] ?? 'Erreur';
-      const nextErrors = { ...(ctrl.errors ?? {}), server: msg };
-
-      ctrl.setErrors(nextErrors);
-      ctrl.markAsTouched();
-    }
-  }
-
-  /**
-   * Nettoie uniquement l’erreur "server" sans écraser required/others.
-   */
-  private clearServerErrorsOnControls(): void {
-    (['topicId', 'title', 'content'] as const).forEach((field) => {
-      const ctrl = this.form.get(field);
-      if (!ctrl?.errors) return;
-
-      const errors = ctrl.errors as Record<string, unknown>;
-      if (!('server' in errors)) return;
-
-      const { server, ...rest } = errors;
-      ctrl.setErrors(Object.keys(rest).length ? rest : null);
-    });
+    // isApiErrorResponse est utilisé dans le helper, import conservé si utilisé ailleurs
+    // (sinon tu peux retirer l'import de isApiErrorResponse ci-dessus)
+    handleApiErrorToUi(err, this.globalError, this.fieldErrors, this.form);
   }
 }
