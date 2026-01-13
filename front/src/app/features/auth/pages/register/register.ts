@@ -1,28 +1,28 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize, startWith } from 'rxjs';
-
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
 import { passwordPolicyValidator } from '@shared/validators/password-policy.validator';
 import { AuthFacade } from '../../state/auth.facade';
-import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
+import {
+  createFormSubmitSignals,
+  prepareSubmit,
+  setApiErrors,
+} from '@shared/forms/auth-submit.helpers';
 
-/**
- * - Appel via facade (register)
- * - Redirection vers /login ensuite 
- */
+type RegisterPayload = {
+  username: string;
+  email: string;
+  password: string;
+};
+
 @Component({
   selector: 'mdd-register',
   standalone: true,
-  imports: [ReactiveFormsModule, AuthLayout, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, AuthLayout /* ...mat modules... */],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
@@ -42,27 +42,18 @@ export class Register {
     password: ['', [Validators.required, passwordPolicyValidator()]],
   });
 
-  private readonly formStatus$ = this.form.statusChanges.pipe(startWith(this.form.status));
-  readonly formStatus = toSignal(this.formStatus$, { initialValue: this.form.status });
-  readonly canSubmit = computed(() => this.formStatus() === 'VALID' && !this.submitting());
+  private readonly submitSignals = createFormSubmitSignals(this.form, this.submitting);
+  readonly formStatus = this.submitSignals.formStatus;
+  readonly canSubmit = this.submitSignals.canSubmit;
 
-  /**
-   * Inscription :
-   * - csrf() best-effort
-   * - puis register()
-   * - redirection /login (décision MVP standard)
-   */
   submit(): void {
-    this.globalError.set(null);
-    this.fieldErrors.set(null);
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.submitting.set(true);
-    const payload = this.form.getRawValue();
+    const payload = prepareSubmit<RegisterPayload>(
+      this.form,
+      this.submitting,
+      this.globalError,
+      this.fieldErrors
+    );
+    if (!payload) return;
 
     this.auth
       .register(payload)
@@ -74,16 +65,7 @@ export class Register {
         next: () => {
           this.router.navigateByUrl('/login').catch(() => undefined);
         },
-        error: (err) => this.handleError(err),
+        error: (err: unknown) => setApiErrors(err, this.globalError, this.fieldErrors),
       });
-  }
-
-  private handleError(err: unknown): void {
-    if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
-      this.globalError.set(err.error.message);
-      this.fieldErrors.set(toFieldErrorMap(err.error.fieldErrors));
-      return;
-    }
-    this.globalError.set('Une erreur est survenue. Réessaie plus tard.');
   }
 }

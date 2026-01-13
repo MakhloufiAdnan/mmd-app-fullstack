@@ -1,32 +1,26 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize, startWith } from 'rxjs';
-
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthLayout } from '../../components/auth-layout/auth-layout';
 import { AuthFacade } from '../../state/auth.facade';
-import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
+import {
+  createFormSubmitSignals,
+  prepareSubmit,
+  setApiErrors,
+} from '@shared/forms/auth-submit.helpers';
 
-/**
- * Rôle :
- * - S'appuyer sur `AuthFacade.login()` pour stocker l'access token en mémoire.
- * - Rediriger vers /feed après login.
- *
- * Note :
- * - `canSubmit()` doit réagir au statut du formulaire.
- *   `form.valid` n'est pas un signal => on utilise `statusChanges` + `toSignal`.
- */
+type LoginPayload = {
+  identifier: string;
+  password: string;
+};
+
 @Component({
   selector: 'mdd-login',
   standalone: true,
-  imports: [ReactiveFormsModule, AuthLayout, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, AuthLayout /* ...mat modules... */],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -36,44 +30,27 @@ export class Login {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** Évite le double submit et gère l'état disabled. */
   readonly submitting = signal(false);
-
-  /** Message d'erreur global (ex: invalid credentials). */
   readonly globalError = signal<string | null>(null);
-
-  /** Erreurs API par champ. */
   readonly fieldErrors = signal<Record<string, string[]> | null>(null);
 
-  /** Formulaire : identifier = email OU username (contrat). */
   readonly form = this.fb.nonNullable.group({
     identifier: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
 
-  /** Rend le statut du form réactif pour `computed()`. */
-  private readonly formStatus$ = this.form.statusChanges.pipe(startWith(this.form.status));
-  readonly formStatus = toSignal(this.formStatus$, { initialValue: this.form.status });
+  private readonly submitSignals = createFormSubmitSignals(this.form, this.submitting);
+  readonly formStatus = this.submitSignals.formStatus;
+  readonly canSubmit = this.submitSignals.canSubmit;
 
-  /** Bouton actif si form VALID et pas en cours de soumission. */
-  readonly canSubmit = computed(() => this.formStatus() === 'VALID' && !this.submitting());
-
-  /**
-   * Soumission :
-   * - Appelle `AuthFacade.login()` (csrf best-effort inclus côté facade/service selon ton implémentation).
-   * - Stocke le token en mémoire via le store, puis navigation /feed.
-   */
   submit(): void {
-    this.globalError.set(null);
-    this.fieldErrors.set(null);
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.submitting.set(true);
-    const payload = this.form.getRawValue();
+    const payload = prepareSubmit<LoginPayload>(
+      this.form,
+      this.submitting,
+      this.globalError,
+      this.fieldErrors
+    );
+    if (!payload) return;
 
     this.auth
       .login(payload)
@@ -85,21 +62,7 @@ export class Login {
         next: () => {
           this.router.navigateByUrl('/feed').catch(() => undefined);
         },
-        error: (err: unknown) => this.handleError(err),
+        error: (err: unknown) => setApiErrors(err, this.globalError, this.fieldErrors),
       });
-  }
-
-  /**
-   * Normalise l'erreur :
-   * - payload API standard => message global + erreurs par champ
-   * - sinon => message générique (évite fuite technique)
-   */
-  private handleError(err: unknown): void {
-    if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
-      this.globalError.set(err.error.message);
-      this.fieldErrors.set(toFieldErrorMap(err.error.fieldErrors));
-      return;
-    }
-    this.globalError.set('Une erreur est survenue. Réessaie plus tard.');
   }
 }
