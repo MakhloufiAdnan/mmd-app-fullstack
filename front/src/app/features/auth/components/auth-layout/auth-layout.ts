@@ -28,7 +28,7 @@ export class AuthLayout {
    */
   onBack(): void {
     if (!isPlatformBrowser(this.platformId)) {
-      void this.router.navigateByUrl('/');
+      this.router.navigateByUrl('/').catch(() => undefined);
       return;
     }
 
@@ -41,6 +41,6 @@ export class AuthLayout {
       return;
     }
 
-    void this.router.navigateByUrl('/');
+    this.router.navigateByUrl('/').catch(() => undefined);
   }
 }

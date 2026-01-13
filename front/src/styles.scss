@@ -30,6 +30,13 @@ $article-surface: #f5f5f5;
       filled-label-text-color: #ffffff,
     )
   );
+
+  // Global overrides (MDD)
+  --mat-sys-background: #ffffff !important;
+  --mat-sys-surface: #ffffff !important;
+
+  // Helper (si tu veux réutiliser la couleur dans l'app)
+  --mdd-article-surface: #{$article-surface};
 }
 
 // Base (taille + layout)
@@ -48,11 +55,11 @@ $article-surface: #f5f5f5;
   --mdc-filled-button-container-shape: 5px;
 }
 
-// Forme + clipping ripple 
+// Forme + clipping ripple
 .mdd-btn.mat-mdc-button-base,
 .auth-submit.mat-mdc-button-base {
   border-radius: 5px !important;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 // Couches internes MDC à arrondir aussi
@@ -65,24 +72,15 @@ $article-surface: #f5f5f5;
   border-radius: 5px !important;
 }
 
-// Variante "plein largeur" 
+// Variante "plein largeur"
 .mdd-btn--full {
   width: 100%;
 }
 
-// Petit helper spinner inline 
+// Petit helper spinner inline
 .mdd-btn-spinner {
   display: inline-flex;
   align-items: center;
-}
-
-/* ================================
-   Global overrides (MDD)
-================================ */
-
-:root {
-  --mat-sys-background: #ffffff !important;
-  --mat-sys-surface: #ffffff !important;
 }
 
 html,
@@ -109,9 +107,8 @@ body {
 }
 
 .mdd-card {
-  background-color: #f5f5f5 !important;
+  background-color: $article-surface !important;
 
-  /* Couleur container MDC (selon version / type de card) */
-  --mdc-elevated-card-container-color: #f5f5f5;
-  --mdc-outlined-card-container-color: #f5f5f5;
+  --mdc-elevated-card-container-color: #{$article-surface};
+  --mdc-outlined-card-container-color: #{$article-surface};
 }

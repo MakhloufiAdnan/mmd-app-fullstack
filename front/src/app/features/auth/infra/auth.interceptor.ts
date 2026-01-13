@@ -38,12 +38,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => err);
       }
 
-      // Pas de refresh sur l'appel refresh lui-même, sinon boucle.
+      // pas de refresh sur refresh, sinon boucle
       if (isRefresh) {
         return throwError(() => err);
       }
 
-      // Une seule tentative refresh->retry par requête.
+      // une seule tentative refresh->retry
       if (req.context.get(AUTH_REFRESH_ATTEMPTED)) {
         return throwError(() => err);
       }
@@ -51,8 +51,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return facade.refreshAccessTokenOnce().pipe(
         switchMap((newToken) => {
           if (!newToken) {
-            // Refresh KO => on redirige vers login et on propage l'erreur.
-            void router.navigateByUrl('/login');
+            router.navigateByUrl('/login').catch(() => undefined);
             return throwError(() => err);
           }
 
