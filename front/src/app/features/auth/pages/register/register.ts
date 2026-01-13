@@ -12,6 +12,9 @@ import {
   prepareSubmit,
   setApiErrors,
 } from '@shared/forms/auth-submit.helpers';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 type RegisterPayload = {
   username: string;
@@ -22,7 +25,13 @@ type RegisterPayload = {
 @Component({
   selector: 'mdd-register',
   standalone: true,
-  imports: [ReactiveFormsModule, AuthLayout /* ...mat modules... */],
+  imports: [
+    ReactiveFormsModule,
+    AuthLayout,
+    MatFormFieldModule,  
+    MatInputModule,      
+    MatButtonModule,
+  ],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })

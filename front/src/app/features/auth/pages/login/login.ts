@@ -11,6 +11,9 @@ import {
   prepareSubmit,
   setApiErrors,
 } from '@shared/forms/auth-submit.helpers';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 type LoginPayload = {
   identifier: string;
@@ -20,7 +23,13 @@ type LoginPayload = {
 @Component({
   selector: 'mdd-login',
   standalone: true,
-  imports: [ReactiveFormsModule, AuthLayout /* ...mat modules... */],
+  imports: [
+    ReactiveFormsModule,
+    AuthLayout,
+    MatFormFieldModule, 
+    MatInputModule,      
+    MatButtonModule,     
+  ],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
