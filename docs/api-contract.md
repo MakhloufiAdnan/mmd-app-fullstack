@@ -27,14 +27,13 @@
   - En **dev** (HTTP), `Secure` peut être désactivé.
   - En **prod**, servir front+back sur le **même site** (ou proxy) pour éviter les complexités CORS + cookies cross-site.
 
-### 2.3 CSRF (obligatoire dès qu’on utilise des cookies d’auth)
+### 2.3 CSRF (global, activé)
 
 - Cookie CSRF (lisible par Angular) : `XSRF-TOKEN` (non HttpOnly)
-- Header envoyé par Angular : `X-XSRF-TOKEN: <valeur du cookie>`
-- **Exigé** au minimum sur :
-  - `POST /api/auth/refresh`
-  - `POST /api/auth/logout`
-- Sur tous les POST/PUT/DELETE, même si Bearer header.
+- Header envoyé par le client : `X-XSRF-TOKEN: <valeur du cookie>`
+- **Obligatoire sur toutes les requêtes mutantes** : `POST`, `PUT`, `PATCH`, `DELETE`
+  - y compris celles avec `Authorization: Bearer …`
+- Si CSRF manquant/invalide : **403 FORBIDDEN**
 
 ---
 
@@ -48,29 +47,20 @@
     { "field": "password", "message": "..." }
   ]
 }
-```
-
----
-
-## 4) Auth
-
-### 4.1 GET /api/auth/csrf (public)
-
+4) Auth
+4.1 GET /api/auth/csrf (public)
 But : initialiser le cookie CSRF pour les SPA.
 
-**Request** : vide  
-**Response 204** : no content  
-**Headers** (exemple) :
+Request : vide
+Response 204 : no content
+Headers (exemple) :
 
-- `Set-Cookie: XSRF-TOKEN=<token>; Path=/; SameSite=Lax`
+Set-Cookie: XSRF-TOKEN=<token>; Path=/; SameSite=Lax
 
-> Remarque : avec Spring Security, le cookie CSRF peut aussi être émis automatiquement sur d’autres réponses.
-> Ce endpoint permet simplement d’avoir un point d’entrée clair côté front.
+Remarque : le cookie CSRF peut aussi être émis sur d’autres réponses.
+Ce endpoint donne un point d’entrée clair côté front.
 
----
-
-### 4.2 POST /api/auth/register (public)
-
+4.2 POST /api/auth/register (public + CSRF requis)
 Request:
 
 ```json
@@ -89,13 +79,15 @@ Response 201:
 
 Erreurs:
 
-- 400 VALIDATION_ERROR (password policy, email invalide, champs manquants)
-- 409 CONFLICT (email/username déjà utilisé)
+400 VALIDATION_ERROR (email invalide, champs manquants, password policy)
 
----
+403 FORBIDDEN (CSRF manquant/invalide)
 
-### 4.3 POST /api/auth/login (public)
+409 CONFLICT (email/username déjà utilisé)
 
+Password policy (back) : >= 8 et contient minuscule + majuscule + chiffre + spécial.
+
+4.3 POST /api/auth/login (public + CSRF requis)
 Request:
 
 ```json
@@ -119,24 +111,24 @@ Response 200:
 
 Headers (exemple) :
 
-- `Set-Cookie: refreshToken=<opaque-or-jwt>; HttpOnly; Secure; SameSite=Lax; Path=/api/auth`
-- (optionnel) `Set-Cookie: XSRF-TOKEN=<token>; Path=/; SameSite=Lax`
+Set-Cookie: refreshToken=<token>; HttpOnly; Secure; SameSite=Lax; Path=/api/auth
 
-Notes:
+Erreurs:
 
-- L’**access token** est utilisé dans `Authorization`.
-- Le **refresh token** n’est jamais exposé au JavaScript (cookie HttpOnly).
+400 VALIDATION_ERROR (champs manquants / format)
 
----
+401 UNAUTHORIZED (identifiants invalides)
 
-### 4.4 POST /api/auth/refresh (public, cookie requis + CSRF)
+403 FORBIDDEN (CSRF manquant/invalide)
 
+4.4 POST /api/auth/refresh (public + cookie requis + CSRF requis)
 But : obtenir un nouvel access token si le refresh token cookie est valide.
 
 Pré-requis :
 
-- Cookie `refreshToken` présent
-- Header `X-XSRF-TOKEN` présent (valeur du cookie `XSRF-TOKEN`)
+Cookie refreshToken présent
+
+Header X-XSRF-TOKEN présent
 
 Request:
 
@@ -154,26 +146,28 @@ Response 200:
 }
 ```
 
-Headers (rotation recommandée) :
+Headers (rotation) :
 
-- `Set-Cookie: refreshToken=<new>; HttpOnly; Secure; SameSite=Lax; Path=/api/auth`
-- (optionnel) `Set-Cookie: XSRF-TOKEN=<token>; Path=/; SameSite=Lax`
+Set-Cookie: refreshToken=<new>; HttpOnly; Secure; SameSite=Lax; Path=/api/auth
 
 Erreurs:
 
-- 401 UNAUTHORIZED (refresh expiré/invalide)
-- 403 FORBIDDEN (CSRF manquant/invalide)
+401 UNAUTHORIZED (refresh expiré/invalide/manquant)
 
----
+403 FORBIDDEN (CSRF manquant/invalide)
 
-### 4.5 POST /api/auth/logout 🔒 (cookie requis + CSRF)
+Note implémentation : un Authorization expiré sur cet endpoint ne doit pas bloquer le refresh.
 
+4.5 POST /api/auth/logout 🔒 (cookie requis + CSRF requis)
 But : invalider la session persistante (refresh) et déconnecter.
 
 Pré-requis :
 
-- Cookie `refreshToken` présent
-- Header `X-XSRF-TOKEN` présent
+Authorization: Bearer <accessToken> (endpoint 🔒)
+
+Cookie refreshToken présent
+
+Header X-XSRF-TOKEN présent
 
 Request:
 
@@ -185,18 +179,16 @@ Response 204 (no content)
 
 Headers (exemple) :
 
-- `Set-Cookie: refreshToken=; Max-Age=0; Path=/api/auth; HttpOnly; Secure; SameSite=Lax`
+Set-Cookie: refreshToken=; Max-Age=0; Path=/api/auth; HttpOnly; Secure; SameSite=Lax
 
-Notes:
+Erreurs:
 
-- Côté front, on supprime aussi l’access token en mémoire.
+401 UNAUTHORIZED (non authentifié ou refresh manquant/invalide)
 
----
+403 FORBIDDEN (CSRF manquant/invalide)
 
-## 5) Profil
-
-### 5.1 GET /api/users/me 🔒
-
+5) Profil
+5.1 GET /api/users/me 🔒
 Response 200:
 
 ```json
@@ -208,9 +200,10 @@ Response 200:
 }
 ```
 
----
+401 UNAUTHORIZED
 
-### 5.2 PUT /api/users/me 🔒
+5.2 PUT /api/users/me 🔒 (PATCH-like + CSRF requis)
+Champs optionnels. Les champs absents ne sont pas modifiés.
 
 Request:
 
@@ -226,42 +219,49 @@ Response 200:
 
 ```json
 { "updated": true }
-```
-
 Notes:
 
-- Tous les champs peuvent être optionnels (PATCH-like) **ou** imposés (PUT strict) : à choisir à l’implémentation.
-- Le back revalide toujours la politique mdp.
+Si password est fourni : pas d’ancien mot de passe requis (décision MVP / implémentation actuelle).
 
----
+Le back revalide toujours la policy mdp.
 
-## 6) Topics
+Erreurs:
 
-### 6.1 GET /api/topics 🔒
+400 VALIDATION_ERROR (format email, password policy, etc.)
 
+401 UNAUTHORIZED
+
+403 FORBIDDEN (CSRF)
+
+409 CONFLICT (email/username déjà utilisé)
+
+6) Topics
+6.1 GET /api/topics 🔒
 Response 200:
 
 ```json
 [
-  { "id": 1, 
-  "name": "Java", 
-  "description": "Java est un langage de programmation",
-  "subscribed": true 
+  {
+    "id": 1,
+    "name": "Java",
+    "description": "Java est un langage de programmation",
+    "subscribed": true
   },
-  { "id": 2, 
-  "name": "Angular", 
-  "description": "Angular est un langage frontend",
-  "subscribed": false 
+  {
+    "id": 2,
+    "name": "Angular",
+    "description": "Angular est un framework frontend",
+    "subscribed": false
   }
 ]
 ```
 
----
+Erreurs:
 
-## 7) Subscriptions
+401 UNAUTHORIZED
 
-### 7.1 POST /api/users/me/subscriptions 🔒
-
+7) Subscriptions
+7.1 POST /api/users/me/subscriptions 🔒 + CSRF requis
 Request:
 
 ```json
@@ -274,26 +274,38 @@ Response 201:
 { "id": 11 }
 ```
 
+id = topicId (identifiant du topic abonné), pas l’id technique de la subscription.
+
 Erreurs:
 
-- 409 CONFLICT (déjà abonné)
+400 VALIDATION_ERROR
 
----
+401 UNAUTHORIZED
 
-### 7.2 DELETE /api/users/me/subscriptions/{topicId} 🔒
+403 FORBIDDEN (CSRF)
 
-Response 204
+404 NOT_FOUND (topic inconnu)
 
----
+409 CONFLICT (déjà abonné)
 
-## 8) Feed (articles)
+7.2 DELETE /api/users/me/subscriptions/{topicId} 🔒 + CSRF requis
+Response 204 (no content)
 
-### 8.1 GET /api/feed 🔒
+Idempotent : renvoie 204 même si l’abonnement n’existe pas.
 
+Erreurs:
+
+401 UNAUTHORIZED
+
+403 FORBIDDEN (CSRF)
+
+8) Feed (articles)
+8.1 GET /api/feed 🔒
 Query params:
 
-- `order=desc|asc` (default `desc`)
-- (option MVP) `topicId=<id>`
+order=desc|asc (default desc)
+
+topicId=<id> (optionnel : filtre sur un topic)
 
 Response 200:
 
@@ -311,12 +323,12 @@ Response 200:
 ]
 ```
 
----
+Erreurs:
 
-## 9) Posts
+401 UNAUTHORIZED
 
-### 9.1 POST /api/posts 🔒
-
+9) Posts
+9.1 POST /api/posts 🔒 + CSRF requis
 Request:
 
 ```json
@@ -335,12 +347,21 @@ Response 201:
 
 Notes:
 
-- `author` + `createdAt` définis côté back.
+author + createdAt définis côté back.
 
----
+Règle implémentée : si non abonné au topic → 403.
 
-### 9.2 GET /api/posts/{postId} 🔒
+Erreurs:
 
+400 VALIDATION_ERROR
+
+401 UNAUTHORIZED
+
+403 FORBIDDEN (CSRF manquant/invalide ou non abonné au topic)
+
+404 NOT_FOUND (topicId inconnu)
+
+9.2 GET /api/posts/{postId} 🔒
 Response 200:
 
 ```json
@@ -362,12 +383,14 @@ Response 200:
 }
 ```
 
----
+Erreurs:
 
-## 10) Commentaires
+401 UNAUTHORIZED
 
-### 10.1 POST /api/posts/{postId}/comments 🔒
+404 NOT_FOUND (postId inconnu)
 
+10) Commentaires
+10.1 POST /api/posts/{postId}/comments 🔒 + CSRF requis
 Request:
 
 ```json
@@ -384,28 +407,46 @@ Response 201:
 
 Notes:
 
-- pas de sous-commentaires (non récursif)
-- author + createdAt définis côté back
+pas de sous-commentaires (non récursif)
 
----
+author + createdAt définis côté back
 
-## 11) Codes HTTP (rappel)
+Règle implémentée : si non abonné au topic du post → 403
 
-- 200 OK (lecture / update)
-- 201 Created (création)
-- 204 No Content (delete/logout/csrf)
-- 400 Validation
-- 401 Unauthorized (non authentifié / token expiré)
-- 403 Forbidden (pas le droit / CSRF invalide)
-- 404 Not Found
-- 409 Conflict
-- 500 Internal
+Erreurs:
 
----
+400 VALIDATION_ERROR
 
-## 12) Flux SPA (résumé)
+401 UNAUTHORIZED
 
-1. Au chargement de l’app : `GET /api/auth/csrf` puis `POST /api/auth/refresh`
-2. Si refresh OK : stocker access token **en mémoire** + naviguer sur routes protégées
-3. Interceptor : si un appel 🔒 répond 401, tenter **une seule fois** `refresh` puis rejouer la requête
-4. Logout : `POST /api/auth/logout` (CSRF) puis purge access token en mémoire
+403 FORBIDDEN (CSRF manquant/invalide ou non abonné au topic)
+
+404 NOT_FOUND (postId inconnu)
+
+11) Codes HTTP (rappel)
+200 OK (lecture / update)
+
+201 Created (création)
+
+204 No Content (delete/csrf/logout)
+
+400 Validation
+
+401 Unauthorized (non authentifié / token expiré / refresh manquant)
+
+403 Forbidden (pas le droit / CSRF invalide / non abonné)
+
+404 Not Found
+
+409 Conflict
+
+500 Internal
+
+12) Flux SPA (résumé)
+Au chargement de l’app : GET /api/auth/csrf (init cookie CSRF) puis POST /api/auth/refresh
+
+Si refresh OK : stocker access token en mémoire + naviguer sur routes protégées
+
+Interceptor : si un appel 🔒 répond 401, tenter une seule fois refresh puis rejouer la requête
+
+Logout : POST /api/auth/logout (CSRF + cookie) puis purge access token en mémoire

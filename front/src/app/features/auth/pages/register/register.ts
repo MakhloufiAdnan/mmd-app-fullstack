@@ -64,15 +64,18 @@ export class Register {
     this.submitting.set(true);
     const payload = this.form.getRawValue();
 
-    const register$ = this.auth.register(payload).pipe(
-      finalize(() => this.submitting.set(false)),
-      takeUntilDestroyed(this.destroyRef)
-    );
-
-    register$.subscribe({
-      next: () => void this.router.navigateByUrl('/login'),
-      error: (err) => this.handleError(err),
-    });
+    this.auth
+      .register(payload)
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: () => {
+          this.router.navigateByUrl('/login').catch(() => undefined);
+        },
+        error: (err) => this.handleError(err),
+      });
   }
 
   private handleError(err: unknown): void {

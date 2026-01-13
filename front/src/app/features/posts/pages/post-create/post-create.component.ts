@@ -35,7 +35,7 @@ import { isApiErrorResponse, toFieldErrorMap } from '@core/api/api-error.model';
     MatProgressSpinnerModule,
   ],
   templateUrl: './post-create.component.html',
-  styleUrls: ['./post-create.component.scss'],
+  styleUrl: './post-create.component.scss',
 })
 export class PostCreateComponent {
   private readonly destroyRef = inject(DestroyRef);
@@ -110,13 +110,14 @@ export class PostCreateComponent {
     this.fieldErrors.set({});
     this.clearServerErrorsOnControls();
 
-    if (this.form.invalid || this.submitting()) return;
+    if (this.form.invalid || this.submitting()) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     const v = this.form.getRawValue();
-
-    // Validators.required + topicId! => ok 
     const payload: CreatePostRequest = {
-      topicId: v.topicId!,
+      topicId: v.topicId!, // ok car Validators.required + check form.invalid
       title: v.title,
       content: v.content,
     };

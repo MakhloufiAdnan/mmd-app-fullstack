@@ -75,15 +75,18 @@ export class Login {
     this.submitting.set(true);
     const payload = this.form.getRawValue();
 
-    const login$ = this.auth.login(payload).pipe(
-      finalize(() => this.submitting.set(false)),
-      takeUntilDestroyed(this.destroyRef)
-    );
-
-    login$.subscribe({
-      next: () => void this.router.navigateByUrl('/feed'),
-      error: (err: unknown) => this.handleError(err),
-    });
+    this.auth
+      .login(payload)
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: () => {
+          this.router.navigateByUrl('/feed').catch(() => undefined);
+        },
+        error: (err: unknown) => this.handleError(err),
+      });
   }
 
   /**

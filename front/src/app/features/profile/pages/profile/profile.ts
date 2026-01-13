@@ -139,19 +139,20 @@ export class Profile implements OnInit {
     this.globalError.set(null);
     this.fieldErrors.set(null);
 
-    const me$ = this.api.me().pipe(
-      finalize(() => this.loading.set(false)),
-      takeUntilDestroyed(this.destroyRef)
-    );
-
-    me$.subscribe({
-      next: (me: UserMeResponse) => {
-        this.me.set(me);
-        this.initialMe.set({ email: me.email, username: me.username });
-        this.form.patchValue({ email: me.email, username: me.username, password: '' });
-      },
-      error: (err: unknown) => this.handleError(err),
-    });
+    this.api
+      .me()
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (me: UserMeResponse) => {
+          this.me.set(me);
+          this.initialMe.set({ email: me.email, username: me.username });
+          this.form.patchValue({ email: me.email, username: me.username, password: '' });
+        },
+        error: (err: unknown) => this.handleError(err),
+      });
   }
 
   /** Charge GET /api/topics (source pour Abonnements). */
@@ -159,18 +160,20 @@ export class Profile implements OnInit {
     this.topicsLoading.set(true);
     this.topicsError.set(null);
 
-    const topics$ = this.topicsApi.listTopics().pipe(
-      finalize(() => this.topicsLoading.set(false)),
-      takeUntilDestroyed(this.destroyRef)
-    );
-
-    topics$.subscribe({
-      next: (topics) => this.topics.set(topics),
-      error: () => {
-        this.topicsError.set('Impossible de charger vos abonnements.');
-        this.snackBar.open('Impossible de charger vos abonnements.', 'OK', { duration: 3000 });
-      },
-    });
+    this.topicsApi
+      .listTopics()
+      .pipe(
+        finalize(() => this.topicsLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (topics) => this.topics.set(topics),
+        error: () => {
+          const msg = 'Impossible de charger vos abonnements.';
+          this.topicsError.set(msg);
+          this.snackBar.open(msg, 'OK', { duration: 3000 });
+        },
+      });
   }
 
   submit(): void {
@@ -187,23 +190,23 @@ export class Profile implements OnInit {
       password: raw.password?.trim() ? raw.password : null,
     };
 
-    const update$ = this.api.updateMe(payload).pipe(
-      finalize(() => this.saving.set(false)),
-      takeUntilDestroyed(this.destroyRef)
-    );
-
-    update$.subscribe({
-      next: (_res: UpdatedResponse) => {
-        this.snackBar.open('Profil mis à jour.', 'OK', { duration: 2000 });
-        this.loadMe();
-      },
-      error: (err: unknown) => this.handleError(err),
-    });
+    this.api
+      .updateMe(payload)
+      .pipe(
+        finalize(() => this.saving.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (_res: UpdatedResponse) => {
+          this.snackBar.open('Profil mis à jour.', 'OK', { duration: 2000 });
+          this.loadMe();
+        },
+        error: (err: unknown) => this.handleError(err),
+      });
   }
 
   /**
-   * Se désabonner d'un thème (depuis le profil).
-   * Endpoint : DELETE /api/users/me/subscriptions/{topicId}
+   * DELETE /api/users/me/subscriptions/{topicId}
    */
   unsubscribe(topicId: number): void {
     // Garde-fou : empêche le double-clic (UX) et évite les appels inutiles.
@@ -211,47 +214,53 @@ export class Profile implements OnInit {
 
     this.globalError.set(null);
 
-    const before = this.topics();
-    const wasSubscribed = (before ?? []).some((t) => t.id === topicId && t.subscribed);
-
-    if (wasSubscribed) {
-      this.topics.update((list) => {
-        if (!list) return list;
-        return list.map((t) => (t.id === topicId ? { ...t, subscribed: false } : t));
-      });
-    }
+    const wasSubscribed = this.isTopicSubscribed(topicId);
+    this.optimisticSetSubscribed(topicId, false, wasSubscribed);
 
     this.setUnsubPending(topicId, true);
 
-    const unsubscribe$ = this.api.unsubscribeFromTopic(topicId).pipe(
-      finalize(() => this.setUnsubPending(topicId, false)),
-      takeUntilDestroyed(this.destroyRef)
-    );
+    this.api
+      .unsubscribeFromTopic(topicId)
+      .pipe(
+        finalize(() => this.setUnsubPending(topicId, false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: () => this.onUnsubscribeSuccess(),
+        error: (err: unknown) => this.onUnsubscribeError(topicId, wasSubscribed, err),
+      });
+  }
 
-    unsubscribe$.subscribe({
-      next: () => {
-        this.snackBar.open('Abonnement supprimé.', 'OK', { duration: 2000 });
-        // Re-sync avec le back
-        this.loadTopics();
-      },
-      error: (err: unknown) => {
-        // Rollback ciblé (évite d'annuler d'autres actions en parallèle)
-        if (wasSubscribed) {
-          this.topics.update((list) => {
-            if (!list) return list;
-            return list.map((t) => (t.id === topicId ? { ...t, subscribed: true } : t));
-          });
-        }
+  private isTopicSubscribed(topicId: number): boolean {
+    return (this.topics() ?? []).some((t) => t.id === topicId && t.subscribed);
+  }
 
-        if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
-          this.snackBar.open(err.error.message, 'OK', { duration: 3000 });
-          return;
-        }
-        this.snackBar.open('Une erreur est survenue. Réessaie plus tard.', 'OK', {
-          duration: 3000,
-        });
-      },
+  private optimisticSetSubscribed(topicId: number, subscribed: boolean, apply: boolean): void {
+    if (!apply) return;
+    this.topics.update((list) => {
+      if (!list) return list;
+      return list.map((t) => (t.id === topicId ? { ...t, subscribed } : t));
     });
+  }
+
+  private onUnsubscribeSuccess(): void {
+    this.snackBar.open('Abonnement supprimé.', 'OK', { duration: 2000 });
+    this.loadTopics();
+  }
+
+  private onUnsubscribeError(topicId: number, wasSubscribed: boolean, err: unknown): void {
+    // rollback
+    this.optimisticSetSubscribed(topicId, true, wasSubscribed);
+
+    const msg = this.extractApiMessage(err) ?? 'Une erreur est survenue. Réessaie plus tard.';
+    this.snackBar.open(msg, 'OK', { duration: 3000 });
+  }
+
+  private extractApiMessage(err: unknown): string | null {
+    if (err instanceof HttpErrorResponse && isApiErrorResponse(err.error)) {
+      return err.error.message;
+    }
+    return null;
   }
 
   private setUnsubPending(topicId: number, isPending: boolean): void {

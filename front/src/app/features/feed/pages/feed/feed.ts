@@ -17,12 +17,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
 
 import { FeedApiService } from '@features/feed/services/feed-api.service';
 import { FeedItem, FeedOrder } from '@features/feed/interfaces/feed.models';
 import { parseOrder, formatComments } from '@features/feed/utils/feed.utils';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatIconModule } from '@angular/material/icon';
 
 type FeedVm = {
   loading: boolean;
@@ -75,25 +75,30 @@ export class Feed {
    * switchMap => "dernière intention utilisateur gagne"
    */
   readonly vm$ = this.order$.pipe(
-  switchMap((order) =>
-    this.api.listFeed(order).pipe(
-      map((feed) => ({ loading: false, error: null, feed, order } satisfies FeedVm)),
-      startWith({ loading: true, error: null, feed: [], order } satisfies FeedVm),
-      catchError(() => of({ loading: false, error: 'Impossible de charger le feed.', feed: [], order } satisfies FeedVm)),
-    )
-  ),
-  shareReplay({ bufferSize: 1, refCount: true }),
-  takeUntilDestroyed(this.destroyRef),
-);
+    switchMap((order) =>
+      this.api.listFeed(order).pipe(
+        map((feed) => ({ loading: false, error: null, feed, order } satisfies FeedVm)),
+        startWith({ loading: true, error: null, feed: [], order } satisfies FeedVm),
+        catchError(() =>
+          of({
+            loading: false,
+            error: 'Impossible de charger le feed.',
+            feed: [],
+            order,
+          } satisfies FeedVm)
+        )
+      )
+    ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+    takeUntilDestroyed(this.destroyRef)
+  );
 
-  /**
-   * Handler UI: on écrit UNIQUEMENT dans l’URL.
-   * L’URL déclenche ensuite le reload (via order$).
-   */
   onOrderChange(order: FeedOrder): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { order }
-    });
+    this.router
+      .navigate([], {
+        relativeTo: this.route,
+        queryParams: { order },
+      })
+      .catch(() => undefined);
   }
 }

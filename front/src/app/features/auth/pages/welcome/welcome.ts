@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 
 /**
  * Page d'accueil publique 
@@ -7,6 +8,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'mdd-welcome',
   standalone: true,
+  imports: [MatButtonModule],
   templateUrl: './welcome.html',
   styleUrl: './welcome.scss',
 })
@@ -17,10 +19,10 @@ export class Welcome {
   * Navigation via boutons 
   */
   goLogin(): void {
-    void this.router.navigateByUrl('/login');
+    this.router.navigateByUrl('/login').catch(() => undefined);
   }
 
   goRegister(): void {
-    void this.router.navigateByUrl('/register');
+    this.router.navigateByUrl('/register').catch(() => undefined);
   }
 }
