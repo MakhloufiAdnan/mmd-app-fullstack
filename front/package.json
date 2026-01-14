@@ -1,17 +1,23 @@
 {
-  "name": "front",
+  "name": "mmd-app-front",
   "version": "1.0",
+  "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
+    "start:coverage": "ng run front:serve-coverage",
     "build": "ng build",
     "test": "ng test --watch=false --browsers=ChromeHeadless",
-    "test:coverage": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
     "test:watch": "ng test",
+    "test:coverage": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
     "sonar:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ../run-sonar.ps1",
-    "e2e:run": "cypress run",
-    "e2e:open": "start-server-and-test \"npm start\" http://localhost:4200 \"cypress open\"",
-    "e2e": "start-server-and-test \"npm start\" http://localhost:4200 \"cypress run\""
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "e2e": "start-server-and-test \"npm run start\" http://localhost:4200 \"npm run cypress:run\"",
+    "e2e:coverage": "rimraf .nyc_output coverage/cypress && start-server-and-test \"npm run start:coverage\" http://localhost:4200 \"npm run cypress:run\" && nyc report --reporter=lcov --reporter=html --reporter=text-summary"
+  },
+  "overrides": {
+    "js-yaml": "^4.1.0"
   },
   "prettier": {
     "printWidth": 100,
@@ -25,7 +31,6 @@
       }
     ]
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^20.3.15",
     "@angular/cdk": "^20.2.14",
@@ -41,20 +46,28 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "^20.0.0",
     "@angular-devkit/build-angular": "^20.3.14",
     "@angular/build": "^20.3.5",
     "@angular/cli": "^20.3.5",
     "@angular/compiler-cli": "^20.3.0",
+    "@cypress/code-coverage": "^3.14.7",
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
     "@types/jasmine": "~5.1.0",
     "baseline-browser-mapping": "^2.9.14",
     "cypress": "^13.17.0",
+    "istanbul-lib-coverage": "^3.2.2",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "nyc": "^17.1.0",
+    "rimraf": "^6.1.2",
     "start-server-and-test": "^2.1.3",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "webpack": "^5.104.1"
   }
 }

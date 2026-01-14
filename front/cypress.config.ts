@@ -15,6 +15,7 @@ export default defineConfig({
     viewportHeight: 720,
     video: false,
     setupNodeEvents(on, config) {
+      require('@cypress/code-coverage/task')(on, config);
       return config;
     },
   },

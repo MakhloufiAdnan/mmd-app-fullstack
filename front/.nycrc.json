@@ -1,0 +1,16 @@
+{
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "report-dir": "coverage/cypress",
+  "reporter": ["html", "text-summary", "lcov"],
+  "all": false,
+  "check-coverage": false,
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.cy.ts",
+    "cypress/**",
+    "src/main.ts",
+    "src/polyfills.ts",
+    "**/*.module.ts",
+    "**/environment*.ts"
+  ]
+}

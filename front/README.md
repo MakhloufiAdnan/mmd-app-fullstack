@@ -4,9 +4,16 @@ SPA Angular (standalone) + Angular Material.
 
 En local, l’app consomme l’API via `/api` grâce au proxy (`proxy.conf.json`).
 
+## Prérequis
+
+- Node.js + npm
+- API back disponible (ou proxy configuré pour pointer vers l’API)
+
 ---
 
 ## Démarrer (dev)
+
+Depuis le dossier `front/` :
 
 ```bash
 npm install
@@ -19,42 +26,85 @@ Tests
 npm test
 ```
 
+Mode watch :
+```bash
+npm run test:watch
+```
+
 ## Coverage
 
 Générer la couverture
 ```bash
 npm run test:coverage
 ```
+### Lire les rapports
+- Rapports générés (depuis le dossier front/) :
 
-Lire le rapport
+HTML : coverage/index.html
+LCOV : coverage/lcov.info (utilisé par Sonar)
 
-Après exécution, Angular génère un rapport de couverture :
+- Ouvrir le rapport HTML :
 
-HTML : front/coverage/index.html
-LCOV : front/coverage/lcov.info (utilisé par Sonar)
-
-➡️ Pour lire le rapport HTML : ouvre front/coverage/index.html dans ton navigateur.
-
-Windows (PowerShell) :
+Windows (PowerShell) — depuis front/ :
 ```bash
-start front/coverage/index.html
+start .\coverage\index.html
 ```
-
 macOS :
 ```bash
-open front/coverage/index.html
+open ./coverage/index.html
 ```
 
 Linux :
 ```bash
-xdg-open front/coverage/index.html
+xdg-open ./coverage/index.html
 ```
 
-Si tu ne vois pas le dossier front/coverage, vérifie que tu as bien lancé --code-coverage (ou npm run test:coverage).
+Si la commande est exécutée depuis la racine du mono-repo, le chemin devient :
+```bash
+front/coverage/index.html.
+```
+
+- Coverage des tests E2E (Cypress)
+
+Lancer les E2E avec coverage (instrumentation + rapport) :
+
+```bash
+npm run e2e:coverage
+```
+
+- Rapports générés (depuis le dossier front/) :
+
+HTML : coverage/cypress/index.html
+LCOV : coverage/cypress/lcov.info
+
+- Ouvrir le rapport HTML E2E :
+
+Windows (PowerShell) — depuis front/ :
+```bash
+start .\coverage\cypress\index.html
+```
+
+- E2E (Cypress)
+Ouvrir Cypress (UI) :
+```bash
+npm run cypress:open
+```
+
+- Lancer Cypress en headless :
+```bash
+npm run cypress:run
+```
+
+- Lancer E2E avec auto-start de l’app (dev) :
+```bash
+npm run e2e
+```
+
+e2e démarre l’app via npm start puis exécute cypress run.
 
 ## SonarQube (mono-repo)
 
-Lancer l’analyse
+Lancer l’analyse :
 ```bash
 npm run sonar:local
 ```
@@ -63,11 +113,12 @@ Le script utilisé est ../run-sonar.ps1 (à la racine du repo).
 
 ### Points importants
 
-Sonar lit le rapport LCOV généré par le coverage :
+Sonar lit le rapport LCOV des tests unitaires :
 
-- front/coverage/lcov.info
+front/coverage/lcov.info
 
-Assure-toi d’avoir exécuté une fois le coverage avant Sonar si tu veux des métriques à jour :
+Recommandé avant Sonar :
+
 ```bash
 npm run test:coverage
 npm run sonar:local
@@ -86,34 +137,24 @@ Exemple front/.env :
 SONAR_TOKEN=__VOTRE_SONAR_TOKEN__
 SONAR_HOST_URL=http://localhost:9000
 ```
-
-E2E (Cypress)
-
-Lancer les tests E2E (headless) :
-```bash
-npm run e2e:run
-```
-
-Ouvrir Cypress (UI) :
-```bash
-npm run e2e:open
-```
-
-Lancer E2E avec auto-start de l’app :
-```bash
-npm run e2e
-```
-
 ### Scripts disponibles
 
 npm start : lance l’app en dev + proxy /api
 
-npm test : tests unitaires en headless
+npm run build : build Angular
+
+npm test : tests unitaires headless
 
 npm run test:watch : tests en mode watch
 
-npm run test:coverage : tests + génération coverage
+npm run test:coverage : tests + coverage (HTML + lcov)
 
 npm run sonar:local : analyse SonarQube (mono-repo)
 
-npm run e2e:run / npm run e2e:open / npm run e2e : Cypress
+npm run cypress:open : Cypress UI
+
+npm run cypress:run : Cypress headless
+
+npm run e2e : start app + Cypress headless
+
+npm run e2e:coverage : start app instrumentée + Cypress + rapport coverage E2E
