@@ -47,7 +47,7 @@ public class DevPostCommentSeeder implements ApplicationRunner {
         }
 
         // 3) Utilisateurs
-        String rawPassword = "Aa1!aaaa";
+        String rawPassword = "Aa1!aaaa"; // NOSONAR - demo seed only (not production credential)
         User bob = getOrCreateUser("bob_marley@example.com", "bob_marley", rawPassword);
         User tom = getOrCreateUser("tom_soyer@example.com", "tom_soyer", rawPassword);
         User ben = getOrCreateUser("ben_jerry@example.com", "ben_jerry", rawPassword);

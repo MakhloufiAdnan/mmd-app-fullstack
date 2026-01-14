@@ -55,6 +55,7 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^25.0.8",
     "baseline-browser-mapping": "^2.9.14",
     "cypress": "^13.17.0",
     "istanbul-lib-coverage": "^3.2.2",
