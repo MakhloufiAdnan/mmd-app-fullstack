@@ -134,3 +134,8 @@ Le front utilise un proxy Angular :
 
 - le navigateur appelle http://localhost:4200/api/\* (same-origin),
 - le dev server proxyfie vers le back → pas de CORS requis en local.
+
+## Documentation
+- Justification des choix techniques (PDF) : docs/justification-choix-techniques.pdf
+- Contrat API : docs/api-contract.md
+- Conformité (privacy / cookies) : docs/privacy.md
