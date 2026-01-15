@@ -4,6 +4,8 @@ SPA Angular (standalone) + Angular Material.
 
 En local, l’app consomme l’API via `/api` grâce au proxy (`proxy.conf.json`).
 
+En **mode prod-like (pour Lighthouse)**, l’app est servie depuis le build `dist/` via `server.cjs` (serve statique + reverse proxy `/api` vers le back), sur le **port 4300**.
+
 ## Prérequis
 
 - Node.js + npm
@@ -30,6 +32,16 @@ Mode watch :
 ```bash
 npm run test:watch
 ```
+
+## Démarrer (prod-like / Lighthouse)
+
+Objectif : mesurer Lighthouse sur un build production (minify + tree-shaking) servi en statique, pas via ng serve.
+
+### Depuis le dossier front/ :
+```bash
+npm run prod
+```
+App : http://localhost:4300
 
 ## Coverage
 
@@ -158,3 +170,5 @@ npm run cypress:run : Cypress headless
 npm run e2e : start app + Cypress headless
 
 npm run e2e:coverage : start app instrumentée + Cypress + rapport coverage E2E
+
+npm run prod : build prod + serveur statique + proxy /api (port 4300, via server.cjs)

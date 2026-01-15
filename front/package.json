@@ -14,7 +14,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "e2e": "start-server-and-test \"npm run start\" http://localhost:4200 \"npm run cypress:run\"",
-    "e2e:coverage": "rimraf .nyc_output coverage/cypress && start-server-and-test \"npm run start:coverage\" http://localhost:4200 \"npm run cypress:run\" && nyc report --reporter=lcov --reporter=html --reporter=text-summary"
+    "e2e:coverage": "rimraf .nyc_output coverage/cypress && start-server-and-test \"npm run start:coverage\" http://localhost:4200 \"npm run cypress:run\" && nyc report --reporter=lcov --reporter=html --reporter=text-summary",
+    "prod": "ng build -c production && node server.cjs"
   },
   "overrides": {
     "js-yaml": "^4.1.0"
@@ -57,7 +58,10 @@
     "@types/jasmine": "~5.1.0",
     "@types/node": "^25.0.8",
     "baseline-browser-mapping": "^2.9.14",
+    "compression": "^1.8.1",
     "cypress": "^13.17.0",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.5",
     "istanbul-lib-coverage": "^3.2.2",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
