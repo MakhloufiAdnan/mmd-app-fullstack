@@ -52,3 +52,15 @@ Rapports :
 
 HTML : back/target/site/jacoco/index.html
 XML : back/target/site/jacoco/jacoco.xml
+
+## Documentation Swagger (OpenAPI)
+
+Une fois l’application démarrée :
+
+* Swagger UI :
+  👉 http://localhost:8080/swagger-ui.html
+
+* Spécification OpenAPI (JSON) :
+  👉 http://localhost:8080/v3/api-docs
+
+Toutes les routes sont documentées via @Operation et @ApiResponse dans les contrôleurs.
