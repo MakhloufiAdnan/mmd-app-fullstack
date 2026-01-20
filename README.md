@@ -88,6 +88,10 @@ mmd-app-fullstack/
 └── back/
 ```
 
+0. Cloner le projet
+     git clone https://github.com/MakhloufiAdnan/mmd-app-fullstack.git
+     cd mmd-app-fullstack
+
 1. Démarrer la DB (MySQL)
    Créer back/.env (non versionné), puis :
 
