@@ -130,7 +130,7 @@ Ces règles ne sont pas explicitement écrites dans les specs MVP, mais elles so
 CSRF
 
 CSRF utilisé principalement pour les flux basés cookie (ex : refresh/logout).
-Les appels protégés en Bearer ne nécessitent pas forcément CSRF (comportement validé par tests).
+CSRF requis sur tous POST/PUT/PATCH/DELETE (y compris Bearer) car filtre CSRF activé globalement + refresh cookie.
 
 CORS (dev)
 

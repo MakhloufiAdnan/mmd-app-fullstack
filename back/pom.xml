@@ -202,7 +202,6 @@
                                 <exclude>com/openclassrooms/mdd_api/feed/dto/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/comment/entity/**</exclude>
                                 <exclude>com/openclassrooms/mdd_api/comment/dto/**</exclude>
-
                             </excludes>
                         </configuration>
                     </execution>
