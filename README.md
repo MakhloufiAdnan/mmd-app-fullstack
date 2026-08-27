@@ -1,145 +1,140 @@
-# MDD — mmd-app-fullstack (Monorepo)
+# Java Angular Social App
 
-MDD est un mini réseau social (MVP) permettant :
+Full-stack social application built with **Java 21, Spring Boot, Angular and MySQL**.
 
-- s’inscrire / se connecter (**session persistante** via refresh token HttpOnly),
-- s’abonner à des thèmes,
-- consulter un feed chronologique (**tri asc/desc**),
-- créer des articles et commenter.
+The project implements a small topic-based social network where users can create an account, subscribe to topics, publish posts, comment and browse a chronological feed.
 
-> MVP : pas de back-office/admin.  
-> Contrainte : mono-repo (un seul repository pour front + back + docs).
+## ✨ Features
 
----
+* User registration and authentication
+* Persistent authentication using HttpOnly refresh-token cookies
+* Topic subscription and unsubscription
+* Chronological feed with ascending / descending sorting
+* Post creation and detailed post view
+* Comments
+* User profile management
+* CSRF protection for state-changing requests
 
-## Structure du repo
+## 🛠️ Tech Stack
 
-- `front/` : application Angular (SPA)
-- `back/` : API Spring Boot (REST)
-- `docs/` : documentation (choix techniques, FAQ, rapports et contrat API)
+### Backend
 
-L’application consomme l’API via **`/api`** (proxy Angular → back en local).
+* Java 21
+* Spring Boot 3
+* REST APIs
+* MySQL
+* JUnit 5
+* MockMvc
+* Testcontainers
+* JaCoCo
 
----
+### Frontend
 
-## Fonctionnalités MVP
+* Angular
+* TypeScript
+* Angular Material
+* Karma / Jasmine
+* Istanbul coverage
 
-- Auth :
-  - inscription / connexion
-  - refresh token (cookie HttpOnly)
-  - logout
-  - endpoint CSRF
-- Topics :
-  - lister les thèmes
-  - s’abonner / se désabonner
-- Feed :
-  - affichage chronologique des posts liés aux thèmes abonnés (**tri asc/desc**)
-- Posts :
-  - créer un post
-  - consulter le détail d’un post
-- Comments :
-  - ajouter un commentaire sur un post
-- Profil :
-  - consulter “Me”
-  - mettre à jour email / username / mot de passe
+### Quality & Tooling
 
----
+* Docker
+* SonarQube
+* Postman
+* Git
 
-## Stack & versions
+## 🏗️ Architecture
 
-- Front : Angular (standalone) + Angular Material
-- Back : Java 21 + Spring Boot 3.x
-- DB : MySQL (Docker)
-- Tests : Front (Karma/Jasmine), Back (JUnit 5 / MockMvc / Testcontainers)
-- Coverage : Istanbul (front), JaCoCo (back)
-
-> Détails d’installation, scripts, tests et coverage :
->
-> - Front : `front/README.md`
-> - Back : `back/README.md`
-
----
-
-## Ports & URLs
-
-- Front : `http://localhost:4200`
-- Back : `http://localhost:8080`
-- API : `http://localhost:8080/api`
-
----
-
-## Pré-requis
-
-- Node.js (LTS recommandé) + npm
-- Java 21
-- Docker (obligatoire : MySQL dev + Testcontainers)
-- Git
-
----
-
-## Quickstart (local)
-
-### Arborescence
+The project is organized as a monorepo:
 
 ```text
-mmd-app-fullstack/
-├── front/
-├── docs/
-└── back/
+.
+├── front/      # Angular SPA
+├── back/       # Spring Boot REST API
+├── docs/       # Technical documentation and API contract
+└── Postman/    # API testing resources
 ```
 
-0. Cloner le projet
-     git clone https://github.com/MakhloufiAdnan/mmd-app-fullstack.git
-     cd mmd-app-fullstack
+The Angular application communicates with the backend through `/api`.
 
-1. Démarrer la DB (MySQL)
-   Créer back/.env (non versionné), puis :
+During local development, the Angular development server proxies API requests to the Spring Boot application.
+
+## 🔐 Authentication & Security
+
+Authentication includes:
+
+* Access and refresh-token flows
+* Refresh token stored in an HttpOnly cookie
+* Logout support
+* CSRF protection
+* Authentication-protected API endpoints
+
+Additional security and implementation decisions are documented in the project documentation.
+
+## 🧪 Testing & Quality
+
+The project includes:
+
+* Backend unit and integration tests
+* Spring MVC tests with MockMvc
+* Database integration tests with Testcontainers
+* Frontend tests
+* Backend coverage with JaCoCo
+* Frontend coverage with Istanbul
+* SonarQube static analysis
+
+## 🚀 Running locally
+
+### Requirements
+
+* Java 21
+* Node.js / npm
+* Docker
+* Git
+
+### Database
 
 ```bash
 cd back
 docker compose up -d
 ```
-2. Lancer le back
+
+### Backend
+
 ```bash
+cd back
 ./mvnw spring-boot:run
-cd..
 ```
-3. Lancer le front
+
+Backend:
+
+```text
+http://localhost:8080
+```
+
+### Frontend
+
 ```bash
 cd front
 npm install
 npm start
 ```
-## SonarQube (mono-repo)
 
-L’analyse Sonar se lance depuis le front :
-```bash
-npm run sonar:local
+Frontend:
+
+```text
+http://localhost:4200
 ```
-Le script run-sonar.ps1 est à la racine du repo.
 
-## Décisions & écarts par rapport aux specs
+## 📚 Documentation
 
-Abonnement requis
+Additional documentation is available in `docs/`, including:
 
-- Créer un post : l’utilisateur doit être abonné au topic choisi
-- Commenter : l’utilisateur doit être abonné au topic du post
+* Technical decisions
+* API contract
+* Privacy and cookie considerations
+* Testing and quality information
 
-Ces règles ne sont pas explicitement écrites dans les specs MVP, mais elles sont cohérentes avec le feed (topics abonnés) et évitent des contenus hors-sujet.
+## 📌 Project Scope
 
-CSRF
-
-CSRF utilisé principalement pour les flux basés cookie (ex : refresh/logout).
-CSRF requis sur tous POST/PUT/PATCH/DELETE (y compris Bearer) car filtre CSRF activé globalement + refresh cookie.
-
-CORS (dev)
-
-Le front utilise un proxy Angular :
-
-- le navigateur appelle http://localhost:4200/api/\* (same-origin),
-- le dev server proxyfie vers le back → pas de CORS requis en local.
-
-## Documentation
-- Justification des choix techniques (PDF) : docs/justification-choix-techniques.pdf
-- Contrat API : docs/api-contract.md
-- Conformité (privacy / cookies) : docs/privacy.md
+This repository represents an MVP focused on Full-Stack application development, REST API design, authentication, automated testing and software quality practices.
